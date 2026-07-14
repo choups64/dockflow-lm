@@ -52,8 +52,13 @@ export default function PreparationArrivagePage() {
 
       router.push("/dashboard/arrivages");
     } catch (error) {
-      console.error(error);
-      toast.error("Erreur lors de l'enregistrement");
+      console.error("Erreur complète :", error);
+
+toast.error(
+  error instanceof Error
+    ? error.message
+    : JSON.stringify(error)
+);
     }
   }
 
