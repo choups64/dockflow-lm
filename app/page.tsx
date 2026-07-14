@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { users } from "@/lib/users";
 
 export default function Home() {
   const router = useRouter();
@@ -11,40 +12,32 @@ export default function Home() {
   const [error, setError] = useState("");
 
   const connexion = () => {
-    if (
-      email === "remi.deschuyteneer@leroymerlin.fr" &&
-      password === "LM041"
-    ) {
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          role: "cariste",
-          email,
-        })
-      );
+    const utilisateur = users.find(
+      (u) => u.email === email && u.password === password
+    );
 
+    if (!utilisateur) {
+      setError("Email ou mot de passe incorrect.");
+      return;
+    }
+
+    localStorage.setItem(
+      "user",
+      JSON.stringify({
+        prenom: utilisateur.prenom,
+        nom: utilisateur.nom,
+        email: utilisateur.email,
+        role: utilisateur.role,
+        rayon: utilisateur.rayon ?? "",
+        libelleRayon: utilisateur.libelleRayon ?? "",
+      })
+    );
+
+    if (utilisateur.role === "cariste") {
       router.push("/cariste");
-      return;
-    }
-
-    if (
-      email === "severine.larquier@gmail.com" &&
-      password === "LM041"
-    ) {
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          role: "rr",
-          email,
-          rayon: "R11",
-        })
-      );
-
+    } else if (utilisateur.role === "rr") {
       router.push("/dashboard");
-      return;
     }
-
-    setError("Email ou mot de passe incorrect.");
   };
 
   return (
@@ -83,7 +76,9 @@ export default function Home() {
           />
 
           {error && (
-            <p className="text-red-400 text-sm">{error}</p>
+            <p className="text-red-400 text-sm">
+              {error}
+            </p>
           )}
 
           <button

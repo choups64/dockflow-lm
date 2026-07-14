@@ -1,13 +1,23 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   FileSpreadsheet,
   Package,
   Truck,
-  Settings,
+  LogOut,
   ArrowRight,
 } from "lucide-react";
 
 export default function DashboardRR() {
+  const router = useRouter();
+
+  const deconnexion = () => {
+    localStorage.removeItem("user");
+    router.push("/");
+  };
+
   return (
     <main className="min-h-screen bg-slate-100">
 
@@ -20,24 +30,36 @@ export default function DashboardRR() {
           <div>
 
             <h1 className="text-4xl font-bold text-slate-800">
-              Bonjour Rémi 👋
+              Bonjour Séverine 👋
             </h1>
 
-            <p className="text-slate-500 mt-1">
+            <p className="text-slate-500">
               Responsable de rayon
             </p>
 
           </div>
 
-          <div className="text-right">
+          <div className="flex items-center gap-6">
 
-            <p className="text-slate-500">
-              DockFlow LM
-            </p>
+            <div className="text-right">
 
-            <p className="text-3xl font-bold text-[#78BE20]">
-              Dashboard
-            </p>
+              <p className="text-slate-500">
+                DockFlow LM
+              </p>
+
+              <p className="text-3xl font-bold text-[#78BE20]">
+                Dashboard
+              </p>
+
+            </div>
+
+            <button
+              onClick={deconnexion}
+              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-2xl transition shadow"
+            >
+              <LogOut size={20} />
+              Déconnexion
+            </button>
 
           </div>
 
@@ -51,7 +73,7 @@ export default function DashboardRR() {
 
         {/* STATISTIQUES */}
 
-        <div className="grid grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 gap-6 mb-8">
 
           <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
 
@@ -61,30 +83,6 @@ export default function DashboardRR() {
 
             <h2 className="text-5xl font-bold text-[#78BE20] mt-3">
               12
-            </h2>
-
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
-
-            <p className="text-slate-500">
-              Camions
-            </p>
-
-            <h2 className="text-5xl font-bold text-[#78BE20] mt-3">
-              4
-            </h2>
-
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
-
-            <p className="text-slate-500">
-              OP
-            </p>
-
-            <h2 className="text-5xl font-bold text-[#78BE20] mt-3">
-              6
             </h2>
 
           </div>
@@ -164,27 +162,6 @@ export default function DashboardRR() {
 
             <p className="text-slate-500 mt-2">
               Consulter et modifier les arrivages.
-            </p>
-
-            <ArrowRight className="mt-6 text-[#78BE20]" />
-
-          </Link>
-
-          <Link
-            href="/parametres"
-            className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 hover:border-[#78BE20] hover:shadow-lg transition"
-          >
-            <Settings
-              size={42}
-              className="text-[#78BE20]"
-            />
-
-            <h2 className="text-2xl font-bold mt-6">
-              Paramètres
-            </h2>
-
-            <p className="text-slate-500 mt-2">
-              Configuration de l'application.
             </p>
 
             <ArrowRight className="mt-6 text-[#78BE20]" />
