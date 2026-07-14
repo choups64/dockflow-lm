@@ -35,22 +35,17 @@ export default function PreparationArrivagePage() {
     setCommande(JSON.parse(json));
   }, [router]);
 
-  // On attend que la commande soit chargée
-  if (!commande) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        Chargement...
-      </main>
-    );
-  }
-
   async function enregistrer() {
+    const currentCommande = commande;
+
+    if (!currentCommande) return;
+
     try {
       await creerArrivagePreparation({
-        commande: commande.commande,
-        fournisseur: commande.fournisseur,
-        dateLivraison: commande.dateLivraison,
-        lignes: commande.lignes,
+        commande: currentCommande.commande,
+        fournisseur: currentCommande.fournisseur,
+        dateLivraison: currentCommande.dateLivraison,
+        lignes: currentCommande.lignes,
       });
 
       toast.success("Arrivage enregistré avec succès");
@@ -60,6 +55,14 @@ export default function PreparationArrivagePage() {
       console.error(error);
       toast.error("Erreur lors de l'enregistrement");
     }
+  }
+
+  if (!commande) {
+    return (
+      <main className="min-h-screen flex items-center justify-center">
+        Chargement...
+      </main>
+    );
   }
 
   return (
