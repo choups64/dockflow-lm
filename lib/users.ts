@@ -12,7 +12,7 @@ export const users = [
     id: 2,
     prenom: "Séverine",
     nom: "Larquier",
-    email: "severine.larquier@leroymerlin.com",
+    email: "severine.larquier@leroymerlin.fr",
     password: "LM041",
     role: "rr",
     rayon: "R11",
