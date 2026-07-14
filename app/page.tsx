@@ -1,13 +1,56 @@
-import Link from "next/link";
-import { Truck, Boxes } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const connexion = () => {
+    if (
+      email === "remi.deschuyteneer@leroymerlin.fr" &&
+      password === "LM041"
+    ) {
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          role: "cariste",
+          email,
+        })
+      );
+
+      router.push("/cariste");
+      return;
+    }
+
+    if (
+      email === "severine.larquier@gmail.com" &&
+      password === "LM041"
+    ) {
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          role: "rr",
+          email,
+          rayon: "R11",
+        })
+      );
+
+      router.push("/dashboard");
+      return;
+    }
+
+    setError("Email ou mot de passe incorrect.");
+  };
+
   return (
-    <main className="min-h-screen bg-[#0F172A] flex items-center justify-center p-8">
+    <main className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6">
 
-      <div className="w-[420px] rounded-[40px] bg-[#111827] border border-slate-700 shadow-2xl overflow-hidden">
-
-        {/* Header */}
+      <div className="w-full max-w-md bg-[#111827] rounded-3xl shadow-2xl overflow-hidden">
 
         <div className="bg-gradient-to-r from-[#78BE20] to-[#5F9C18] p-8">
 
@@ -16,92 +59,39 @@ export default function Home() {
           </h1>
 
           <p className="text-center text-white/80 mt-2">
-            Gestion des arrivages Leroy Merlin
+            Connexion
           </p>
 
         </div>
 
-        {/* Contenu */}
+        <div className="p-8 space-y-5">
 
-        <div className="p-8">
+          <input
+            type="email"
+            placeholder="Adresse e-mail"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-xl p-4 bg-slate-800 text-white border border-slate-700"
+          />
 
-          <h2 className="text-white text-2xl font-bold">
-            Choisissez votre profil
-          </h2>
+          <input
+            type="password"
+            placeholder="Mot de passe"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="w-full rounded-xl p-4 bg-slate-800 text-white border border-slate-700"
+          />
 
-          <p className="text-slate-400 mt-2">
-            Sélectionnez votre mode d'utilisation.
-          </p>
+          {error && (
+            <p className="text-red-400 text-sm">{error}</p>
+          )}
 
-          <div className="mt-8 space-y-5">
-
-            {/* RR */}
-
-            <Link
-              href="/dashboard"
-              className="block rounded-3xl bg-slate-800 border border-slate-700 p-6 hover:border-[#78BE20] transition-all hover:scale-[1.02]"
-            >
-              <div className="flex items-center gap-5">
-
-                <div className="w-16 h-16 rounded-2xl bg-[#78BE20] flex items-center justify-center">
-
-                  <Boxes
-                    size={30}
-                    color="white"
-                  />
-
-                </div>
-
-                <div>
-
-                  <h3 className="text-white text-xl font-bold">
-                    Responsable de Rayon
-                  </h3>
-
-                  <p className="text-slate-400 mt-1">
-                    Gestion des commandes BACKO et des arrivages.
-                  </p>
-
-                </div>
-
-              </div>
-
-            </Link>
-
-            {/* Cariste */}
-
-            <Link
-              href="/cariste"
-              className="block rounded-3xl bg-slate-800 border border-slate-700 p-6 hover:border-[#78BE20] transition-all hover:scale-[1.02]"
-            >
-              <div className="flex items-center gap-5">
-
-                <div className="w-16 h-16 rounded-2xl bg-[#78BE20] flex items-center justify-center">
-
-                  <Truck
-                    size={30}
-                    color="white"
-                  />
-
-                </div>
-
-                <div>
-
-                  <h3 className="text-white text-xl font-bold">
-                    Cariste
-                  </h3>
-
-                  <p className="text-slate-400 mt-1">
-                    Recherche, scan EAN et gestion des palettes.
-                  </p>
-
-                </div>
-
-              </div>
-
-            </Link>
-
-          </div>
+          <button
+            onClick={connexion}
+            className="w-full bg-[#78BE20] hover:bg-[#6BAA1C] text-white font-bold rounded-xl p-4 transition"
+          >
+            Se connecter
+          </button>
 
         </div>
 
