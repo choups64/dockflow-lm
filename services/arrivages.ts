@@ -1,64 +1,41 @@
 import { supabase } from "@/lib/supabase";
+import { ArrivageForm } from "@/lib/validators";
 
-export interface Arrivage {
-  id?: string;
-  commande: string;
-  reference_lm?: string;
-  ean?: string;
-  produit?: string;
-  rayon_id: number;
-  destination_id: number;
-  nombre_palettes: number;
-  date_arrivee?: string;
-  date_mise_en_magasin?: string;
-  commentaire?: string;
-}
-
-export const ArrivagesService = {
-
-  async getAll() {
-    return await supabase
+export class ArrivagesService {
+  static async create(data: ArrivageForm) {
+    // 1 - Création de l'arrivage
+    const { data: arrivage, error } = await supabase
       .from("arrivages")
-      .select(`
-        *,
-        rayons(code,nom),
-        destinations(code,nom)
-      `)
-      .order("created_at", { ascending: false });
-  },
-
-  async getById(id: string) {
-    return await supabase
-      .from("arrivages")
-      .select(`
-        *,
-        rayons(code,nom),
-        destinations(code,nom)
-      `)
-      .eq("id", id)
-      .single();
-  },
-
-  async create(arrivage: Arrivage) {
-    return await supabase
-      .from("arrivages")
-      .insert(arrivage)
+      .insert({
+        commande: data.numero_commande,
+        rayon_id: data.rayon_id,
+        date_mise_en_magasin: data.date_mise_en_magasin,
+        commentaire: data.commentaire,
+      })
       .select()
       .single();
-  },
 
-  async update(id: string, arrivage: Partial<Arrivage>) {
-    return await supabase
-      .from("arrivages")
-      .update(arrivage)
-      .eq("id", id);
-  },
+    if (error) {
+      console.error(error);
+      throw error;
+    }
 
-  async delete(id: string) {
-    return await supabase
-      .from("arrivages")
-      .delete()
-      .eq("id", id);
-  },
+    // 2 - Création des destinations
+    const destinations = data.destinations.map((d) => ({
+      arrivage_id: arrivage.id,
+      destination_id: d.destination_id,
+      nombre_palettes: d.nb_palettes,
+    }));
 
-};
+    const { error: errorDestinations } = await supabase
+      .from("arrivage_destinations")
+      .insert(destinations);
+
+    if (errorDestinations) {
+      console.error(errorDestinations);
+      throw errorDestinations;
+    }
+
+    return arrivage;
+  }
+}

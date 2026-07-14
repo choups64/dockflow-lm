@@ -1,107 +1,150 @@
-import Link from "next/link";
-import { ArrowLeft, Plus, Pencil } from "lucide-react";
+"use client";
 
-export default function ArrivagesRR() {
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+
+type Arrivage = {
+  id: string;
+  commande: string;
+  fournisseur: string | null;
+  date_arrivee: string | null;
+  statut: string;
+};
+
+export default function ArrivagesPage() {
+  const [arrivages, setArrivages] = useState<Arrivage[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    chargerArrivages();
+  }, []);
+
+  async function chargerArrivages() {
+    const { data, error } = await supabase
+      .from("arrivages")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error(error);
+    } else {
+      setArrivages(data as Arrivage[]);
+    }
+
+    setLoading(false);
+  }
+
+  if (loading) {
+    return (
+      <main className="p-10">
+        <p className="text-xl">Chargement...</p>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-slate-100">
+    <main className="p-10 bg-slate-100 min-h-screen">
 
-      <header className="bg-white border-b">
+      <div className="max-w-7xl mx-auto">
 
-        <div className="max-w-7xl mx-auto px-8 h-20 flex items-center justify-between">
+        <div className="flex justify-between items-center mb-8">
 
-          <div className="flex items-center gap-4">
+          <h1 className="text-3xl font-bold text-[#78BE20]">
+            Mes arrivages
+          </h1>
 
-            <Link
-              href="/dashboard"
-              className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center"
-            >
-              <ArrowLeft size={20} />
-            </Link>
-
-            <div>
-
-              <h1 className="text-3xl font-bold">
-                Mes arrivages
-              </h1>
-
-              <p className="text-slate-500">
-                Responsable de rayon
-              </p>
-
-            </div>
-
-          </div>
-
-          <Link
-            href="/dashboard/nouvel-arrivage"
-            className="flex items-center gap-2 rounded-xl bg-[#78BE20] px-5 py-3 text-white font-semibold"
+          <a
+            href="/dashboard/import"
+            className="rounded-xl bg-[#78BE20] px-5 py-3 font-bold text-white hover:bg-[#63a71b]"
           >
-            <Plus size={18} />
-            Nouvel arrivage
-          </Link>
+            + Nouvel arrivage
+          </a>
 
         </div>
 
-      </header>
+        <div className="overflow-hidden rounded-3xl bg-white shadow">
 
-      <div className="max-w-7xl mx-auto p-8 space-y-5">
+          <table className="w-full">
 
-        {[
-          {
-            commande: "458963",
-            produit: "Salon de jardin",
-            palettes: 7,
-            date: "15/07/2026",
-          },
-          {
-            commande: "458964",
-            produit: "WC suspendu",
-            palettes: 3,
-            date: "16/07/2026",
-          },
-          {
-            commande: "458965",
-            produit: "Parquet stratifié",
-            palettes: 9,
-            date: "17/07/2026",
-          },
-        ].map((arrivage) => (
+            <thead className="bg-slate-100">
 
-          <div
-            key={arrivage.commande}
-            className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 flex justify-between items-center"
-          >
+              <tr>
 
-            <div>
+                <th className="p-4 text-left">
+                  Commande
+                </th>
 
-              <h2 className="text-2xl font-bold">
-                {arrivage.produit}
-              </h2>
+                <th className="p-4 text-left">
+                  Fournisseur
+                </th>
 
-              <p className="text-slate-500 mt-2">
-                Commande BACKO : {arrivage.commande}
-              </p>
+                <th className="p-4 text-left">
+                  Livraison
+                </th>
 
-              <p className="text-slate-500">
-                {arrivage.palettes} palettes
-              </p>
+                <th className="p-4 text-left">
+                  Statut
+                </th>
 
-              <p className="text-slate-500">
-                Mise en magasin : {arrivage.date}
-              </p>
+              </tr>
 
-            </div>
+            </thead>
 
-            <Link
-              href="/dashboard/modifier-arrivage"
-              className="rounded-xl bg-slate-100 p-4 hover:bg-slate-200"
-            >
-              <Pencil size={22} />
-            </Link>
+            <tbody>
 
-          </div>
+              {arrivages.length === 0 && (
 
-        ))}
+                <tr>
+
+                  <td
+                    colSpan={4}
+                    className="p-8 text-center text-slate-500"
+                  >
+                    Aucun arrivage enregistré.
+                  </td>
+
+                </tr>
+
+              )}
+
+              {arrivages.map((a) => (
+
+                <tr
+                  key={a.id}
+                  className="border-t hover:bg-slate-50"
+                >
+
+                  <td className="p-4 font-semibold">
+                    {a.commande}
+                  </td>
+
+                  <td className="p-4">
+                    {a.fournisseur ?? "-"}
+                  </td>
+
+                  <td className="p-4">
+                    {a.date_arrivee ?? "-"}
+                  </td>
+
+                  <td className="p-4">
+
+                    <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-800">
+
+                      {a.statut}
+
+                    </span>
+
+                  </td>
+
+                </tr>
+
+              ))}
+
+            </tbody>
+
+          </table>
+
+        </div>
 
       </div>
 

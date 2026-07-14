@@ -1,70 +1,232 @@
-import SearchBar from "@/components/cariste/SearchBar";
-import ScannerButton from "@/components/cariste/ScannerButton";
-import ArrivalCard from "@/components/cariste/ArrivalCard";
-import DestinationCard from "@/components/cariste/DestinationCard";
-import BottomMenu from "@/components/cariste/BottomMenu";
+"use client";
+
+import { useState } from "react";
+import {
+  Barcode,
+  Search,
+  PackageSearch,
+  Building2,
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
+
+type Arrivage = {
+  id: string;
+  commande: string;
+  fournisseur: string | null;
+  date_arrivee: string | null;
+  statut: string;
+};
 
 export default function CaristePage() {
+  const [mode, setMode] = useState<
+    "ean" | "reference" | "commande" | "rayon"
+  >("ean");
+
+  const [recherche, setRecherche] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resultats, setResultats] = useState<Arrivage[]>([]);
+
+  async function rechercher() {
+    if (!recherche.trim()) return;
+
+    setLoading(true);
+
+    let query = supabase
+      .from("arrivages")
+      .select("*");
+
+    switch (mode) {
+      case "commande":
+        query = query.eq("commande", recherche);
+        break;
+
+      case "reference":
+        query = query.eq("reference_lm", recherche);
+        break;
+
+      case "rayon":
+        query = query.eq("rayon_id", Number(recherche));
+        break;
+
+      case "ean":
+        // Sera branché plus tard
+        query = query.eq("ean", recherche);
+        break;
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error(error);
+      setResultats([]);
+    } else {
+      setResultats(data as Arrivage[]);
+    }
+
+    setLoading(false);
+  }
+
   return (
-    <main className="min-h-screen bg-[#111827] text-white pb-24">
+    <main className="min-h-screen bg-slate-100">
 
-      {/* Header */}
+      <div className="max-w-xl mx-auto p-6">
 
-      <div className="bg-gradient-to-r from-[#0f172a] to-[#1e293b] px-5 py-6 shadow-xl">
-
-        <h1 className="text-3xl font-bold">
-          DockFlow LM
+        <h1 className="text-4xl font-bold text-[#78BE20] mb-8">
+          Mode Cariste
         </h1>
 
-        <p className="text-green-400 mt-1">
-          Application Cariste
-        </p>
+        <div className="grid grid-cols-2 gap-4 mb-8">
 
-      </div>
+          <button
+            onClick={() => setMode("ean")}
+            className={`rounded-2xl p-5 font-bold transition ${
+              mode === "ean"
+                ? "bg-[#78BE20] text-white"
+                : "bg-white"
+            }`}
+          >
+            <Barcode
+              className="mx-auto mb-3"
+              size={34}
+            />
+            Scanner EAN
+          </button>
 
-      <div className="p-5 space-y-6">
+          <button
+            onClick={() => setMode("reference")}
+            className={`rounded-2xl p-5 font-bold transition ${
+              mode === "reference"
+                ? "bg-[#78BE20] text-white"
+                : "bg-white"
+            }`}
+          >
+            <Search
+              className="mx-auto mb-3"
+              size={34}
+            />
+            Référence LM
+          </button>
 
-        {/* Recherche */}
+          <button
+            onClick={() => setMode("commande")}
+            className={`rounded-2xl p-5 font-bold transition ${
+              mode === "commande"
+                ? "bg-[#78BE20] text-white"
+                : "bg-white"
+            }`}
+          >
+            <PackageSearch
+              className="mx-auto mb-3"
+              size={34}
+            />
+            Commande
+          </button>
 
-        <SearchBar />
+          <button
+            onClick={() => setMode("rayon")}
+            className={`rounded-2xl p-5 font-bold transition ${
+              mode === "rayon"
+                ? "bg-[#78BE20] text-white"
+                : "bg-white"
+            }`}
+          >
+            <Building2
+              className="mx-auto mb-3"
+              size={34}
+            />
+            Rayon
+          </button>
 
-        <ScannerButton />
+        </div>
 
-        {/* Carte principale */}
+        <div className="bg-white rounded-3xl shadow-xl p-6">
 
-        <ArrivalCard
-          produit="Salon de jardin"
-          commande="458963"
-          rayon="R7"
-          palettes={7}
-          destination="Destinations multiples"
-          date="15/07/2026"
-        />
-
-        {/* Destinations */}
-
-        <div className="space-y-3">
-
-          <DestinationCard
-            destination="MER"
-            palettes={4}
+          <input
+            value={recherche}
+            onChange={(e) =>
+              setRecherche(e.target.value)
+            }
+            placeholder={
+              mode === "ean"
+                ? "Scanner un code EAN..."
+                : mode === "reference"
+                ? "Référence Leroy Merlin..."
+                : mode === "commande"
+                ? "Numéro de commande..."
+                : "Code rayon..."
+            }
+            className="w-full rounded-xl border p-4 text-xl"
           />
 
-          <DestinationCard
-            destination="Réserve 1"
-            palettes={2}
-          />
+          <button
+            onClick={rechercher}
+            className="w-full mt-5 rounded-xl bg-[#78BE20] text-white py-4 font-bold text-lg hover:bg-[#63a71b]"
+          >
+            Rechercher
+          </button>
 
-          <DestinationCard
-            destination="Rack Effi"
-            palettes={1}
-          />
+        </div>
+
+        <div className="mt-8 rounded-3xl bg-white p-6 shadow-xl">
+
+          <h2 className="font-bold text-xl mb-4">
+            Résultat
+          </h2>
+
+          {loading ? (
+
+            <div className="text-center py-10">
+              Recherche...
+            </div>
+
+          ) : resultats.length === 0 ? (
+
+            <div className="text-slate-400 text-center py-12">
+              Aucun résultat
+            </div>
+
+          ) : (
+
+            <div className="space-y-4">
+
+              {resultats.map((r) => (
+
+                <div
+                  key={r.id}
+                  className="rounded-xl border p-5"
+                >
+
+                  <p className="font-bold text-lg">
+                    Commande {r.commande}
+                  </p>
+
+                  <p>
+                    Fournisseur :
+                    {" "}
+                    {r.fournisseur ?? "-"}
+                  </p>
+
+                  <p>
+                    Livraison :
+                    {" "}
+                    {r.date_arrivee ?? "-"}
+                  </p>
+
+                  <span className="inline-block mt-3 rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700">
+                    {r.statut}
+                  </span>
+
+                </div>
+
+              ))}
+
+            </div>
+
+          )}
 
         </div>
 
       </div>
-
-      <BottomMenu />
 
     </main>
   );
