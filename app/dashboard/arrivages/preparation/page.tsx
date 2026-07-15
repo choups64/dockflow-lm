@@ -40,11 +40,22 @@ export default function PreparationArrivagePage() {
 
     if (!currentCommande) return;
 
+    // Conversion du format FR (15/07/2026)
+    // vers le format ISO (2026-07-15)
+    let dateISO: string | null = null;
+
+    if (currentCommande.dateLivraison) {
+      const [jour, mois, annee] =
+        currentCommande.dateLivraison.split("/");
+
+      dateISO = `${annee}-${mois}-${jour}`;
+    }
+
     try {
       await creerArrivagePreparation({
         commande: currentCommande.commande,
         fournisseur: currentCommande.fournisseur,
-        dateLivraison: currentCommande.dateLivraison,
+        dateLivraison: dateISO,
         lignes: currentCommande.lignes,
       });
 
@@ -54,11 +65,11 @@ export default function PreparationArrivagePage() {
     } catch (error) {
       console.error("Erreur complète :", error);
 
-toast.error(
-  error instanceof Error
-    ? error.message
-    : JSON.stringify(error)
-);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : JSON.stringify(error)
+      );
     }
   }
 
