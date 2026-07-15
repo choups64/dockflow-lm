@@ -2,8 +2,8 @@ import { supabase } from "@/lib/supabase";
 import { ArrivageForm } from "@/lib/validators";
 
 export class ArrivagesService {
+
   static async create(data: ArrivageForm) {
-    // 1 - Création de l'arrivage
     const { data: arrivage, error } = await supabase
       .from("arrivages")
       .insert({
@@ -11,31 +11,73 @@ export class ArrivagesService {
         rayon_id: data.rayon_id,
         date_mise_en_magasin: data.date_mise_en_magasin,
         commentaire: data.commentaire,
+        statut: "EN_PREPARATION",
       })
       .select()
       .single();
 
-    if (error) {
-      console.error(error);
-      throw error;
-    }
+    if (error) throw error;
 
-    // 2 - Création des destinations
-    const destinations = data.destinations.map((d) => ({
-      arrivage_id: arrivage.id,
-      destination_id: d.destination_id,
-      nombre_palettes: d.nb_palettes,
-    }));
+    if (data.destinations.length) {
+      const destinations = data.destinations.map((d) => ({
+        arrivage_id: arrivage.id,
+        destination_id: d.destination_id,
+        nombre_palettes: d.nb_palettes,
+      }));
 
-    const { error: errorDestinations } = await supabase
-      .from("arrivage_destinations")
-      .insert(destinations);
+      const { error: err } = await supabase
+        .from("arrivage_destinations")
+        .insert(destinations);
 
-    if (errorDestinations) {
-      console.error(errorDestinations);
-      throw errorDestinations;
+      if (err) throw err;
     }
 
     return arrivage;
+  }
+
+  static async getById(id: string) {
+    const { data, error } = await supabase
+      .from("arrivages")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  static async getLignes(id: string) {
+    const { data, error } = await supabase
+      .from("arrivage_lignes")
+      .select("*")
+      .eq("arrivage_id", id)
+      .order("created_at");
+
+    if (error) throw error;
+    return data;
+  }
+
+  static async update(id: string, values: Partial<ArrivageForm>) {
+    const { error } = await supabase
+      .from("arrivages")
+      .update({
+        commande: values.numero_commande,
+        rayon_id: values.rayon_id,
+        date_mise_en_magasin: values.date_mise_en_magasin,
+        commentaire: values.commentaire,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (error) throw error;
+  }
+
+  static async delete(id: string) {
+    const { error } = await supabase
+      .from("arrivages")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
   }
 }
