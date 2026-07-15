@@ -59,7 +59,6 @@ export function parseBacko(text: string): BackoResult {
 
   for (const line of lines) {
 
-    // Ignore les lignes d'entête
     if (
       line.includes("N° commande") ||
       line.includes("Fournisseur") ||
@@ -77,38 +76,43 @@ export function parseBacko(text: string): BackoResult {
       continue;
     }
 
-    // Cherche une référence LM de 8 chiffres
     const ref = line.match(/\b\d{8}\b/);
 
     if (!ref) continue;
 
     const referenceLM = ref[0];
 
-    // Tout ce qui est après la référence
+    // Recherche de la quantité (ex : 5.00)
+    let quantite = 0;
+
+    const matchQte = line.match(/\b(\d+)[.,]00\b/);
+
+    if (matchQte) {
+      quantite = Number(matchQte[1]);
+    }
+
+    // Désignation
     let designation = line.substring(
       line.indexOf(referenceLM) + referenceLM.length
     );
 
-    // Nettoyage OCR
     designation = designation
       .replace(/^[|\s:]+/, "")
       .replace(/\s+/g, " ")
       .trim();
 
-    // Coupe avant le premier nombre décimal
-    const premierNombre = designation.search(/-?\d+\.\d{2}/);
+    const premierNombre = designation.search(/\d+[.,]\d{2}/);
 
     if (premierNombre > -1) {
       designation = designation.substring(0, premierNombre).trim();
     }
 
-    // Ignore les désignations trop courtes
     if (designation.length < 3) continue;
 
     produits.push({
       referenceLM,
       designation,
-      quantite: 0,
+      quantite,
     });
   }
 
