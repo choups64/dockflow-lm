@@ -46,7 +46,7 @@ export default function PreparationLine({
 
   const [repartitions, setRepartitions] = useState([
   {
-    palettes: nombrePalettesInitial,
+    palettes: nombrePalettesInitial ?? 1,
     destination: destinationInitiale,
   },
 ]);
@@ -68,17 +68,48 @@ export default function PreparationLine({
     );
   }, [destinationGlobale, modeGlobal]);
 
+  useEffect(() => {
+    const prochaineRepartition = {
+      palettes: nombrePalettesInitial ?? 1,
+      destination: destinationInitiale ?? "",
+    };
+
+    setRepartitions((precedentes) => {
+      if (
+        precedentes.length === 1 &&
+        precedentes[0].palettes === prochaineRepartition.palettes &&
+        precedentes[0].destination === prochaineRepartition.destination
+      ) {
+        return precedentes;
+      }
+
+      return [prochaineRepartition];
+    });
+  }, [destinationInitiale, nombrePalettesInitial]);
+
+  function notifierChangement(prochainesRepartitions: Repartition[]) {
+    onChange?.({
+      destination: prochainesRepartitions[0]?.destination ?? "",
+      nombre_palettes: prochainesRepartitions.reduce(
+        (total, repartition) => total + repartition.palettes,
+        0
+      ),
+    });
+  }
+
   
   function modifierDestination(index:number,valeur:string){
     const copy=[...repartitions];
     copy[index].destination=valeur;
     setRepartitions(copy);
+    notifierChangement(copy);
   }
 
   function modifierPalettes(index:number,valeur:string){
     const copy=[...repartitions];
     copy[index].palettes=Number(valeur)||0;
     setRepartitions(copy);
+    notifierChangement(copy);
   }
 
   function ajouterDestination(){

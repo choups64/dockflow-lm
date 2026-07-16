@@ -72,8 +72,8 @@ setCommande({
     referenceLM: l.reference_lm,
     designation: l.designation,
     quantite: l.quantite,
-    destination: l.destination,
-    nombre_palettes: l.nombre_palettes,
+    destination: l.destination ?? "",
+    nombre_palettes: l.nombre_palettes ?? 1,
     ean: l.ean,
   })),
 });
@@ -215,7 +215,7 @@ if (!commande) {
 
           {commande.lignes.map((ligne, index) => (
   <PreparationLine
-    key={index}
+    key={`${arrivageId ?? commande.commande}-${index}`}
     reference={ligne.referenceLM}
     designation={ligne.designation}
     quantite={ligne.quantite}
