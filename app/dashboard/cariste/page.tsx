@@ -77,9 +77,11 @@ export default function CaristePage() {
     }
 
     const { data: destinationsTrouvees, error: erreurDestinations } = await supabase
-      .from("arrivage_destinations")
+      .from("arrivage_lignes")
       .select("id, reference_lm, designation, nombre_palettes, destination")
       .eq("arrivage_id", arrivageTrouve.id);
+
+    console.log("Lignes récupérées pour l'arrivage :", destinationsTrouvees);
 
     if (erreurDestinations) {
       setErreurRecherche("Impossible de charger les lignes de la commande.");
