@@ -20,8 +20,17 @@ interface Props {
   reference: string;
   designation: string;
   quantite: number;
+
   destinationGlobale?: string;
   modeGlobal?: boolean;
+
+  destinationInitiale?: string;
+  nombrePalettesInitial?: number;
+
+  onChange?: (data: {
+    destination: string;
+    nombre_palettes: number;
+  }) => void;
 }
 
 export default function PreparationLine({
@@ -30,10 +39,17 @@ export default function PreparationLine({
   quantite,
   destinationGlobale = "",
   modeGlobal = false,
+  destinationInitiale = "",
+  nombrePalettesInitial = 1,
+  onChange,
 }: Props) {
+
   const [repartitions, setRepartitions] = useState([
-    { palettes: 1, destination: "" },
-  ]);
+  {
+    palettes: nombrePalettesInitial,
+    destination: destinationInitiale,
+  },
+]);
 
   const [listeDestinations, setListeDestinations] = useState<DestinationDb[]>([]);
 
@@ -52,6 +68,7 @@ export default function PreparationLine({
     );
   }, [destinationGlobale, modeGlobal]);
 
+  
   function modifierDestination(index:number,valeur:string){
     const copy=[...repartitions];
     copy[index].destination=valeur;
@@ -87,7 +104,7 @@ export default function PreparationLine({
             />
 
             <select
-              value={r.destination}
+  value={r.destination ?? ""}
               disabled={modeGlobal}
               onChange={(e)=>modifierDestination(i,e.target.value)}
               className="flex-1 rounded border px-2 py-2"

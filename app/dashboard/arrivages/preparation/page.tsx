@@ -4,14 +4,24 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import PreparationLine from "@/components/arrivages/PreparationLine";
-import { creerArrivagePreparation } from "@/lib/arrivages";
 import { getDestinations, type Destination } from "@/lib/destinations";
 import { toast } from "sonner";
+import {
+  getArrivageById,
+  getLignesArrivage,
+} from "@/lib/arrivages";
+import {
+  creerArrivagePreparation,
+  updateArrivage,
+} from "@/lib/arrivages";
 
 type Ligne = {
   referenceLM: string;
   designation: string;
   quantite: number;
+  destination?: string;
+  nombre_palettes?: number;
+  ean?: string | null;
 };
 
 type CommandeBacko = {
@@ -21,7 +31,15 @@ type CommandeBacko = {
   lignes: Ligne[];
 };
 
-export default function PreparationArrivagePage() {
+type Props = {
+  mode?: "create" | "edit";
+  arrivageId?: string;
+};
+
+export default function PreparationArrivagePage({
+  mode = "create",
+  arrivageId,
+}: Props) {
   const router = useRouter();
 
   const [commande, setCommande] = useState<CommandeBacko | null>(null);
@@ -30,53 +48,116 @@ export default function PreparationArrivagePage() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
 
   useEffect(() => {
-    const json = localStorage.getItem("commandeBacko");
+  async function initialiser() {
+    if (mode === "create") {
+      const json = localStorage.getItem("commandeBacko");
 
-    if (!json) {
-      router.replace("/import");
-      return;
+      if (!json) {
+        router.replace("/import");
+        return;
+      }
+
+      setCommande(JSON.parse(json));
+    } else {
+      if (!arrivageId) return;
+
+const arrivage = await getArrivageById(arrivageId);
+const lignes = await getLignesArrivage(arrivageId);
+
+setCommande({
+  commande: arrivage.commande,
+  fournisseur: arrivage.fournisseur ?? "",
+  dateLivraison: arrivage.date_arrivee ?? "",
+  lignes: lignes.map((l: any) => ({
+    referenceLM: l.reference_lm,
+    designation: l.designation,
+    quantite: l.quantite,
+    destination: l.destination,
+    nombre_palettes: l.nombre_palettes,
+    ean: l.ean,
+  })),
+});
     }
-
-    setCommande(JSON.parse(json));
 
     getDestinations()
       .then(setDestinations)
       .catch(console.error);
-  }, [router]);
+  }
+
+  initialiser();
+}, [router, mode, arrivageId]);
 
   async function enregistrer() {
     if (!commande) return;
+    const currentCommande = commande;
 
     let dateISO: string | null = null;
 
     if (commande.dateLivraison) {
-      const [j, m, a] = commande.dateLivraison.split("/");
-      dateISO = `${a}-${m}-${j}`;
+      if (commande.dateLivraison) {
+
+  if (commande.dateLivraison.includes("/")) {
+
+    const [j, m, a] = commande.dateLivraison.split("/");
+    dateISO = `${a}-${m}-${j}`;
+
+  } else {
+
+    dateISO = commande.dateLivraison;
+
+  }
+
+}
     }
 
     try {
-      await creerArrivagePreparation({
-        commande: commande.commande,
-        fournisseur: commande.fournisseur,
-        dateLivraison: dateISO,
-        lignes: commande.lignes,
-      });
+  if (mode === "edit" && arrivageId) {
 
-      toast.success("Arrivage enregistré");
-      router.push("/dashboard/arrivages");
-    } catch (e) {
-      console.error(e);
-      toast.error("Erreur lors de l'enregistrement");
-    }
+    await updateArrivage(arrivageId, {
+      commande: currentCommande.commande,
+      fournisseur: currentCommande.fournisseur,
+      dateLivraison: dateISO,
+      lignes: currentCommande.lignes,
+    });
+
+    toast.success("Arrivage modifié avec succès");
+
+  } else {
+
+    await creerArrivagePreparation({
+      commande: currentCommande.commande,
+      fournisseur: currentCommande.fournisseur,
+      dateLivraison: dateISO,
+      lignes: currentCommande.lignes,
+    });
+
+    toast.success("Arrivage enregistré avec succès");
+
   }
 
-  if (!commande) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        Chargement...
-      </main>
-    );
-  }
+  router.push("/dashboard/arrivages");
+
+} catch (error: any) {
+  console.error("Erreur complète :", error);
+  console.error("Message :", error?.message);
+  console.error("Details :", error?.details);
+  console.error("Hint :", error?.hint);
+  console.error("Code :", error?.code);
+
+  toast.error(error?.message ?? "Erreur lors de l'enregistrement");
+}
+
+}
+
+if (!commande) {
+  return (
+    <main className="min-h-screen bg-slate-100 flex items-center justify-center">
+      <p className="text-xl text-slate-500">
+        Chargement de l'arrivage...
+      </p>
+    </main>
+  );
+}
 
   return (
     <main className="min-h-screen bg-slate-100 p-8">
@@ -132,16 +213,36 @@ export default function PreparationArrivagePage() {
 
         <div className="space-y-6">
 
-          {commande.lignes.map((ligne,index)=>(
-            <PreparationLine
-              key={index}
-              reference={ligne.referenceLM}
-              designation={ligne.designation}
-              quantite={ligne.quantite}
-              modeGlobal={globalCommande}
-              destinationGlobale={destinationGlobale}
-            />
-          ))}
+          {commande.lignes.map((ligne, index) => (
+  <PreparationLine
+    key={index}
+    reference={ligne.referenceLM}
+    designation={ligne.designation}
+    quantite={ligne.quantite}
+    modeGlobal={globalCommande}
+    destinationGlobale={destinationGlobale}
+    destinationInitiale={ligne.destination ?? ""}
+    nombrePalettesInitial={ligne.nombre_palettes}
+    onChange={({ destination, nombre_palettes }) => {
+      setCommande((prev) => {
+        if (!prev) return prev;
+
+        const lignes = [...prev.lignes];
+
+        lignes[index] = {
+          ...lignes[index],
+          destination,
+          nombre_palettes,
+        };
+
+        return {
+          ...prev,
+          lignes,
+        };
+      });
+    }}
+  />
+))}
 
         </div>
 

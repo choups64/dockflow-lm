@@ -120,7 +120,8 @@ export default function ArrivagesPage() {
                     <div className="flex justify-center gap-3">
 
                       <button
-                        onClick={()=>router.push(`/dashboard/arrivages/preparation?id=${a.id}`)}
+                        onClick={() =>
+                          router.push(`/dashboard/arrivages/modifier/${a.id}`)}
                         className="rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700"
                       >
                         <Pencil size={18}/>
