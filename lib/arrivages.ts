@@ -1,5 +1,35 @@
 import { supabase } from "@/lib/supabase";
 
+export const STATUTS_ARRIVAGE = {
+  EN_PREPARATION: {
+    libelle: "En préparation",
+    emoji: "🟡",
+    badgeClassName: "bg-yellow-100 text-yellow-800",
+  },
+  PRET_A_RECEVOIR: {
+    libelle: "Prêt à recevoir",
+    emoji: "🟢",
+    badgeClassName: "bg-green-100 text-green-800",
+  },
+  RECU: {
+    libelle: "Reçu",
+    emoji: "🔵",
+    badgeClassName: "bg-blue-100 text-blue-800",
+  },
+} as const;
+
+export type StatutArrivage = keyof typeof STATUTS_ARRIVAGE;
+
+export function getStatutArrivage(statut: string | null | undefined) {
+  return (
+    STATUTS_ARRIVAGE[statut as StatutArrivage] ?? {
+      libelle: statut ?? "Inconnu",
+      emoji: "⚪",
+      badgeClassName: "bg-slate-100 text-slate-800",
+    }
+  );
+}
+
 export type LignePreparation = {
   referenceLM: string;
   designation: string;
@@ -60,11 +90,16 @@ export async function getLignesArrivage(arrivageId:string){
   return data;
 }
 
-export async function updateArrivage(id:string,data:ArrivagePreparation){
+export async function updateArrivage(
+  id:string,
+  data:ArrivagePreparation,
+  statut?: StatutArrivage
+){
   const {error}=await supabase.from("arrivages").update({
     commande:data.commande,
     fournisseur:data.fournisseur,
     date_arrivee:data.dateLivraison,
+    ...(statut ? { statut } : {}),
     updated_at:new Date().toISOString(),
   }).eq("id",id);
   if(error) throw error;
@@ -87,6 +122,18 @@ export async function updateArrivage(id:string,data:ArrivagePreparation){
     const {error:e2}=await supabase.from("arrivage_lignes").insert(lignes);
     if(e2) throw e2;
   }
+}
+
+export async function updateStatutArrivage(id: string, statut: StatutArrivage) {
+  const { error } = await supabase
+    .from("arrivages")
+    .update({
+      statut,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", id);
+
+  if (error) throw error;
 }
 
 export async function deleteArrivage(id:string){

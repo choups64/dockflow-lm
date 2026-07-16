@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { getStatutArrivage } from "@/lib/arrivages";
 
 type Arrivage = {
   id: string;
@@ -111,9 +112,15 @@ export default function ArrivagesPage() {
                   <td className="p-4">{a.date_arrivee ?? "-"}</td>
 
                   <td className="p-4">
-                    <span className="rounded-full bg-yellow-100 px-3 py-1 text-sm font-semibold text-yellow-800">
-                      {a.statut}
+                    {(() => {
+                      const statut = getStatutArrivage(a.statut);
+
+                      return (
+                    <span className={`rounded-full px-3 py-1 text-sm font-semibold ${statut.badgeClassName}`}>
+                      {statut.emoji} {statut.libelle}
                     </span>
+                      );
+                    })()}
                   </td>
 
                   <td className="p-4">

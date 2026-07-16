@@ -12,7 +12,9 @@ import {
 } from "@/lib/arrivages";
 import {
   creerArrivagePreparation,
+  type StatutArrivage,
   updateArrivage,
+  updateStatutArrivage,
 } from "@/lib/arrivages";
 
 type Repartition = {
@@ -107,7 +109,7 @@ setCommande({
   initialiser();
 }, [router, mode, arrivageId]);
 
-  async function enregistrer() {
+  async function enregistrer(statutApresEnregistrement?: StatutArrivage) {
     if (!commande) return;
     const currentCommande = commande;
 
@@ -138,18 +140,22 @@ setCommande({
       fournisseur: currentCommande.fournisseur,
       dateLivraison: dateISO,
       lignes: currentCommande.lignes,
-    });
+    }, statutApresEnregistrement);
 
     toast.success("Arrivage modifié avec succès");
 
   } else {
 
-    await creerArrivagePreparation({
+    const arrivage = await creerArrivagePreparation({
       commande: currentCommande.commande,
       fournisseur: currentCommande.fournisseur,
       dateLivraison: dateISO,
       lignes: currentCommande.lignes,
     });
+
+    if (statutApresEnregistrement) {
+      await updateStatutArrivage(arrivage.id, statutApresEnregistrement);
+    }
 
     toast.success("Arrivage enregistré avec succès");
 
@@ -266,7 +272,14 @@ if (!commande) {
 
         <div className="mt-10 flex justify-end">
           <button
-            onClick={enregistrer}
+            onClick={() => enregistrer("PRET_A_RECEVOIR")}
+            className="mr-4 rounded-xl bg-blue-600 px-8 py-4 text-white font-bold"
+          >
+            Valider la préparation
+          </button>
+
+          <button
+            onClick={() => enregistrer()}
             className="rounded-xl bg-[#78BE20] px-8 py-4 text-white font-bold"
           >
             Enregistrer l'arrivage
