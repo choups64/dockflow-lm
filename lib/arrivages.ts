@@ -4,8 +4,10 @@ export type LignePreparation = {
   referenceLM: string;
   designation: string;
   quantite: number;
-  destination?: string;
-  nombre_palettes?: number;
+  repartitions?: {
+    palettes: number;
+    destination: string;
+  }[];
   ean?: string | null;
 };
 
@@ -27,15 +29,17 @@ export async function creerArrivagePreparation(data: ArrivagePreparation) {
   if (error) throw error;
 
   if (data.lignes.length) {
-    const lignes = data.lignes.map(l => ({
-      arrivage_id: arrivage.id,
-      reference_lm: l.referenceLM,
-      designation: l.designation,
-      quantite: l.quantite,
-      destination: l.destination ?? null,
-      nombre_palettes: l.nombre_palettes ?? 1,
-      ean: l.ean ?? null,
-    }));
+    const lignes = data.lignes.flatMap(l =>
+      (l.repartitions ?? [{ palettes: 1, destination: "" }]).map(r => ({
+        arrivage_id: arrivage.id,
+        reference_lm: l.referenceLM,
+        designation: l.designation,
+        quantite: l.quantite,
+        destination: r.destination || null,
+        nombre_palettes: r.palettes,
+        ean: l.ean ?? null,
+      }))
+    );
 
     const { error: e2 } = await supabase.from("arrivage_lignes").insert(lignes);
     if (e2) throw e2;
@@ -67,15 +71,17 @@ export async function updateArrivage(id:string,data:ArrivagePreparation){
 
   await supabase.from("arrivage_lignes").delete().eq("arrivage_id",id);
 
-  const lignes=data.lignes.map(l=>({
-    arrivage_id:id,
-    reference_lm:l.referenceLM,
-    designation:l.designation,
-    quantite:l.quantite,
-    destination:l.destination ?? null,
-    nombre_palettes:l.nombre_palettes ?? 1,
-    ean:l.ean ?? null,
-  }));
+  const lignes=data.lignes.flatMap(l =>
+    (l.repartitions ?? [{ palettes: 1, destination: "" }]).map(r => ({
+      arrivage_id:id,
+      reference_lm:l.referenceLM,
+      designation:l.designation,
+      quantite:l.quantite,
+      destination:r.destination || null,
+      nombre_palettes:r.palettes,
+      ean:l.ean ?? null,
+    }))
+  );
 
   if(lignes.length){
     const {error:e2}=await supabase.from("arrivage_lignes").insert(lignes);

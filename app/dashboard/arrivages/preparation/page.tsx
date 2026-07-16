@@ -15,12 +15,16 @@ import {
   updateArrivage,
 } from "@/lib/arrivages";
 
+type Repartition = {
+  palettes: number;
+  destination: string;
+};
+
 type Ligne = {
   referenceLM: string;
   designation: string;
   quantite: number;
-  destination?: string;
-  nombre_palettes?: number;
+  repartitions?: Repartition[];
   ean?: string | null;
 };
 
@@ -64,18 +68,34 @@ export default function PreparationArrivagePage({
 const arrivage = await getArrivageById(arrivageId);
 const lignes = await getLignesArrivage(arrivageId);
 
+const lignesRegroupees = new Map<string, Ligne>();
+
+lignes.forEach((l: any) => {
+  const ligneExistante = lignesRegroupees.get(l.reference_lm);
+  const repartition = {
+    palettes: l.nombre_palettes ?? 1,
+    destination: l.destination ?? "",
+  };
+
+  if (ligneExistante) {
+    ligneExistante.repartitions?.push(repartition);
+    return;
+  }
+
+  lignesRegroupees.set(l.reference_lm, {
+    referenceLM: l.reference_lm,
+    designation: l.designation,
+    quantite: l.quantite,
+    repartitions: [repartition],
+    ean: l.ean,
+  });
+});
+
 setCommande({
   commande: arrivage.commande,
   fournisseur: arrivage.fournisseur ?? "",
   dateLivraison: arrivage.date_arrivee ?? "",
-  lignes: lignes.map((l: any) => ({
-    referenceLM: l.reference_lm,
-    designation: l.designation,
-    quantite: l.quantite,
-    destination: l.destination ?? "",
-    nombre_palettes: l.nombre_palettes ?? 1,
-    ean: l.ean,
-  })),
+  lignes: Array.from(lignesRegroupees.values()),
 });
     }
 
@@ -221,9 +241,8 @@ if (!commande) {
     quantite={ligne.quantite}
     modeGlobal={globalCommande}
     destinationGlobale={destinationGlobale}
-    destinationInitiale={ligne.destination ?? ""}
-    nombrePalettesInitial={ligne.nombre_palettes}
-    onChange={({ destination, nombre_palettes }) => {
+    repartitionsInitiales={ligne.repartitions}
+    onChange={({ repartitions }) => {
       setCommande((prev) => {
         if (!prev) return prev;
 
@@ -231,8 +250,7 @@ if (!commande) {
 
         lignes[index] = {
           ...lignes[index],
-          destination,
-          nombre_palettes,
+          repartitions,
         };
 
         return {
