@@ -49,7 +49,7 @@ export default function CaristePage() {
   const [modeRecherche, setModeRecherche] = useState<ModeRecherche>(null);
   const [recherche, setRecherche] = useState("");
   const [arrivage, setArrivage] = useState<Arrivage | null>(null);
-  const [destinations, setDestinations] = useState<ArrivageDestination[]>([]);
+  const [lignesData, setLignesData] = useState<ArrivageDestination[]>([]);
   const [rechercheEnCours, setRechercheEnCours] = useState(false);
   const [erreurRecherche, setErreurRecherche] = useState("");
 
@@ -62,7 +62,7 @@ export default function CaristePage() {
     setRechercheEnCours(true);
     setErreurRecherche("");
     setArrivage(null);
-    setDestinations([]);
+    setLignesData([]);
 
     const { data: arrivageTrouve, error: erreurArrivage } = await supabase
       .from("arrivages")
@@ -70,27 +70,33 @@ export default function CaristePage() {
       .eq("commande", numeroCommande)
       .maybeSingle();
 
+    console.log({ arrivageTrouve, erreurArrivage });
+
     if (erreurArrivage || !arrivageTrouve) {
       setErreurRecherche("Aucune commande trouvée.");
       setRechercheEnCours(false);
       return;
     }
 
-    const { data: destinationsTrouvees, error: erreurDestinations } = await supabase
+    const { data: lignesRecuperees, error: erreurLignes } = await supabase
       .from("arrivage_lignes")
       .select("id, reference_lm, designation, nombre_palettes, destination")
       .eq("arrivage_id", arrivageTrouve.id);
 
-    console.log("Lignes récupérées pour l'arrivage :", destinationsTrouvees);
+    console.log({
+      arrivageTrouve,
+      lignesData: lignesRecuperees,
+      erreur: erreurLignes,
+    });
 
-    if (erreurDestinations) {
+    if (erreurLignes) {
       setErreurRecherche("Impossible de charger les lignes de la commande.");
       setRechercheEnCours(false);
       return;
     }
 
     setArrivage(arrivageTrouve as Arrivage);
-    setDestinations((destinationsTrouvees ?? []) as ArrivageDestination[]);
+    setLignesData((lignesRecuperees ?? []) as ArrivageDestination[]);
     setRechercheEnCours(false);
   }
 
@@ -203,26 +209,9 @@ export default function CaristePage() {
 
               <div className="my-6 border-t border-slate-300" />
 
-              <div className="space-y-4">
-                {destinations.map((ligne) => (
-                  <button
-                    key={ligne.id}
-                    type="button"
-                    className="w-full rounded-2xl border border-slate-200 bg-white p-6 text-left shadow-sm transition hover:border-[#78BE20] hover:shadow-md"
-                  >
-                    <h3 className="text-xl font-bold text-slate-800">
-                      {ligne.reference_lm}
-                    </h3>
-                    <p className="mt-1 text-slate-600">
-                      {ligne.designation ?? "-"}
-                    </p>
-                    <p className="mt-4 font-semibold text-slate-700">
-                      {ligne.nombre_palettes} palettes
-                    </p>
-                    <p className="text-[#78BE20]">{ligne.destination ?? "-"}</p>
-                  </button>
-                ))}
-              </div>
+              {lignesData.length > 0 && (
+                <pre>{JSON.stringify(lignesData, null, 2)}</pre>
+              )}
             </section>
           )}
         </section>
