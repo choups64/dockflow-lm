@@ -27,6 +27,8 @@ export default function CaristePage() {
   const [resultats, setResultats] = useState<Arrivage[]>([]);
 
   async function rechercher() {
+    console.log("Recherche lancée");
+
     if (!recherche.trim()) return;
 
     setLoading(true);
@@ -54,13 +56,29 @@ export default function CaristePage() {
         break;
     }
 
-    const { data, error } = await query;
+    const { data: arrivageTrouve, error: erreurArrivage } = await query;
+    let lignesData = null;
+    let error = erreurArrivage;
 
-    if (error) {
-      console.error(error);
+    if (mode === "commande" && arrivageTrouve?.[0]) {
+      const { data, error: erreurLignes } = await supabase
+        .from("arrivage_lignes")
+        .select("*")
+        .eq("arrivage_id", arrivageTrouve[0].id);
+
+      lignesData = data;
+      error = erreurLignes ?? erreurArrivage;
+    }
+
+    console.log("arrivageTrouve", arrivageTrouve);
+    console.log("lignesData", lignesData);
+    console.log("error", error);
+
+    if (erreurArrivage) {
+      console.error(erreurArrivage);
       setResultats([]);
     } else {
-      setResultats(data as Arrivage[]);
+      setResultats(arrivageTrouve as Arrivage[]);
     }
 
     setLoading(false);
