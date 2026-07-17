@@ -49,20 +49,22 @@ export default function CaristePage() {
   const [modeRecherche, setModeRecherche] = useState<ModeRecherche>(null);
   const [recherche, setRecherche] = useState("");
   const [arrivage, setArrivage] = useState<Arrivage | null>(null);
-  const [lignesData, setLignesData] = useState<ArrivageDestination[]>([]);
+  const [lignesAffichees, setLignesAffichees] = useState<ArrivageDestination[]>([]);
   const [rechercheEnCours, setRechercheEnCours] = useState(false);
   const [erreurRecherche, setErreurRecherche] = useState("");
 
   const modeActif = modesRecherche.find((mode) => mode.id === modeRecherche);
 
   async function rechercherCommande() {
+    console.log("Recherche lancée");
+
     const numeroCommande = recherche.trim();
     if (!numeroCommande) return;
 
     setRechercheEnCours(true);
     setErreurRecherche("");
     setArrivage(null);
-    setLignesData([]);
+    setLignesAffichees([]);
 
     const { data: arrivageTrouve, error: erreurArrivage } = await supabase
       .from("arrivages")
@@ -70,7 +72,9 @@ export default function CaristePage() {
       .eq("commande", numeroCommande)
       .maybeSingle();
 
-    console.log({ arrivageTrouve, erreurArrivage });
+    let error = erreurArrivage;
+    console.log(arrivageTrouve);
+    console.log(error);
 
     if (erreurArrivage || !arrivageTrouve) {
       setErreurRecherche("Aucune commande trouvée.");
@@ -78,16 +82,15 @@ export default function CaristePage() {
       return;
     }
 
-    const { data: lignesRecuperees, error: erreurLignes } = await supabase
+    const { data: lignesData, error: erreurLignes } = await supabase
       .from("arrivage_lignes")
       .select("id, reference_lm, designation, nombre_palettes, destination")
       .eq("arrivage_id", arrivageTrouve.id);
 
-    console.log({
-      arrivageTrouve,
-      lignesData: lignesRecuperees,
-      erreur: erreurLignes,
-    });
+    error = erreurLignes;
+    console.log(arrivageTrouve);
+    console.log(lignesData);
+    console.log(error);
 
     if (erreurLignes) {
       setErreurRecherche("Impossible de charger les lignes de la commande.");
@@ -96,7 +99,7 @@ export default function CaristePage() {
     }
 
     setArrivage(arrivageTrouve as Arrivage);
-    setLignesData((lignesRecuperees ?? []) as ArrivageDestination[]);
+    setLignesAffichees((lignesData ?? []) as ArrivageDestination[]);
     setRechercheEnCours(false);
   }
 
@@ -209,8 +212,8 @@ export default function CaristePage() {
 
               <div className="my-6 border-t border-slate-300" />
 
-              {lignesData.length > 0 && (
-                <pre>{JSON.stringify(lignesData, null, 2)}</pre>
+              {lignesAffichees.length > 0 && (
+                <pre>{JSON.stringify(lignesAffichees, null, 2)}</pre>
               )}
             </section>
           )}
