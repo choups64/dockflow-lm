@@ -29,6 +29,18 @@ type LigneArrivage = {
   nombre_palettes: number;
 };
 
+type DestinationRegroupee = {
+  destination: string | null;
+  nombre_palettes: number;
+};
+
+type LigneRegroupee = {
+  reference_lm: string;
+  designation: string | null;
+  totalPalettes: number;
+  destinations: DestinationRegroupee[];
+};
+
 export default function CaristePage() {
   const [mode, setMode] = useState<
     "ean" | "reference" | "commande" | "rayon"
@@ -38,6 +50,40 @@ export default function CaristePage() {
   const [loading, setLoading] = useState(false);
   const [resultats, setResultats] = useState<Arrivage[]>([]);
   const [lignes, setLignes] = useState<LigneArrivage[]>([]);
+
+  const lignesRegroupees = Array.from(
+    lignes.reduce((groupes, ligne) => {
+      const palettes = Number(ligne.nombre_palettes);
+      const nombrePalettes = Number.isFinite(palettes) ? palettes : 0;
+      let groupe = groupes.get(ligne.reference_lm);
+
+      if (!groupe) {
+        groupe = {
+          reference_lm: ligne.reference_lm,
+          designation: ligne.designation,
+          totalPalettes: 0,
+          destinations: [],
+        };
+        groupes.set(ligne.reference_lm, groupe);
+      }
+
+      const destinationExistante = groupe.destinations.find(
+        (destination) => destination.destination === ligne.destination
+      );
+
+      if (destinationExistante) {
+        destinationExistante.nombre_palettes += nombrePalettes;
+      } else {
+        groupe.destinations.push({
+          destination: ligne.destination,
+          nombre_palettes: nombrePalettes,
+        });
+      }
+
+      groupe.totalPalettes += nombrePalettes;
+      return groupes;
+    }, new Map<string, LigneRegroupee>()).values()
+  );
 
   async function rechercher() {
     console.log("Recherche lancée");
@@ -255,14 +301,24 @@ export default function CaristePage() {
                   {mode === "commande" && (
                     <div className="mt-5 space-y-3 border-t pt-4">
                       {(() => {
-                        console.log("state lignes", lignes);
+                        console.log("lignes regroupées", lignesRegroupees);
 
-                        return lignes.map((ligne) => (
-                          <div key={ligne.id} className="rounded-lg border p-4">
+                        return lignesRegroupees.map((ligne) => (
+                          <div key={ligne.reference_lm} className="rounded-lg border p-4">
                             <p className="font-bold">{ligne.reference_lm}</p>
                             <p>{ligne.designation ?? "-"}</p>
-                            <p>Destination : {ligne.destination ?? "-"}</p>
-                            <p>Palettes : {ligne.nombre_palettes}</p>
+                            <p className="mt-3 font-semibold">
+                              Total palettes : {ligne.totalPalettes}
+                            </p>
+
+                            <div className="mt-3 space-y-1">
+                              {ligne.destinations.map((destination) => (
+                                <p key={destination.destination ?? "sans-destination"}>
+                                  {destination.destination ?? "-"} : {destination.nombre_palettes}{" "}
+                                  {destination.nombre_palettes === 1 ? "palette" : "palettes"}
+                                </p>
+                              ))}
+                            </div>
                           </div>
                         ));
                       })()}
