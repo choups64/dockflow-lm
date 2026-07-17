@@ -73,8 +73,8 @@ export default function CaristePage() {
       .maybeSingle();
 
     let error = erreurArrivage;
-    console.log(arrivageTrouve);
-    console.log(error);
+    console.log("arrivageTrouve", arrivageTrouve);
+    console.log("error", error);
 
     if (erreurArrivage || !arrivageTrouve) {
       setErreurRecherche("Aucune commande trouvée.");
@@ -88,9 +88,9 @@ export default function CaristePage() {
       .eq("arrivage_id", arrivageTrouve.id);
 
     error = erreurLignes;
-    console.log(arrivageTrouve);
-    console.log(lignesData);
-    console.log(error);
+    console.log("arrivageTrouve", arrivageTrouve);
+    console.log("lignesData", lignesData);
+    console.log("error", error);
 
     if (erreurLignes) {
       setErreurRecherche("Impossible de charger les lignes de la commande.");
@@ -173,7 +173,7 @@ export default function CaristePage() {
                 />
                 <button
                   type="button"
-                  onClick={modeRecherche === "commande" ? rechercherCommande : undefined}
+                  onClick={rechercherCommande}
                   disabled={modeRecherche !== "commande" || rechercheEnCours}
                   className="rounded-xl bg-slate-100 px-4 text-slate-500"
                   aria-label={`Rechercher par ${modeActif.titre}`}
