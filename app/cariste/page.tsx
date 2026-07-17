@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Building2, PackageSearch, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { RayonsService } from "@/services/rayons";
@@ -288,7 +289,15 @@ export default function CaristePage() {
   return (
     <main className="min-h-screen bg-[#090D0F] pb-10 text-white">
       <header className="border-b border-[#78BE20] bg-[#11181C] shadow-lg shadow-black/20">
-        <div className="mx-auto flex max-w-lg items-center px-5 py-5 sm:px-6">
+        <div className="mx-auto flex max-w-lg items-center gap-5 px-5 py-5 sm:px-6">
+          <Image
+            src="/leroy-merlin-logo.svg"
+            alt="Leroy Merlin"
+            width={110}
+            height={70}
+            priority
+            className="h-14 w-auto shrink-0 object-contain"
+          />
           <div className="min-w-0">
             <p className="text-xl font-black tracking-[0.16em]">DOCK<span className="text-[#78BE20]">FLOW</span></p>
             <p className="mt-1 text-xs font-bold tracking-[0.18em] text-[#AAB2B7]">MODE CARISTE</p>
