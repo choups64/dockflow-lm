@@ -17,6 +17,18 @@ type Arrivage = {
   statut: string;
 };
 
+type LigneArrivage = {
+  id: string;
+  arrivage_id: string;
+  reference_lm: string;
+  designation: string | null;
+  quantite: number;
+  destination: string | null;
+  ean: string | null;
+  created_at: string;
+  nombre_palettes: number;
+};
+
 export default function CaristePage() {
   const [mode, setMode] = useState<
     "ean" | "reference" | "commande" | "rayon"
@@ -25,6 +37,7 @@ export default function CaristePage() {
   const [recherche, setRecherche] = useState("");
   const [loading, setLoading] = useState(false);
   const [resultats, setResultats] = useState<Arrivage[]>([]);
+  const [lignes, setLignes] = useState<LigneArrivage[]>([]);
 
   async function rechercher() {
     console.log("Recherche lancée");
@@ -32,6 +45,7 @@ export default function CaristePage() {
     if (!recherche.trim()) return;
 
     setLoading(true);
+    setLignes([]);
 
     let query = supabase
       .from("arrivages")
@@ -66,8 +80,12 @@ export default function CaristePage() {
         .select("*")
         .eq("arrivage_id", arrivageTrouve[0].id);
 
-      lignesData = data;
+      lignesData = data as LigneArrivage[] | null;
       error = erreurLignes ?? erreurArrivage;
+
+      if (!erreurLignes) {
+        setLignes(lignesData ?? []);
+      }
     }
 
     console.log("arrivageTrouve", arrivageTrouve);
@@ -233,6 +251,23 @@ export default function CaristePage() {
                   <span className="inline-block mt-3 rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700">
                     {r.statut}
                   </span>
+
+                  {mode === "commande" && (
+                    <div className="mt-5 space-y-3 border-t pt-4">
+                      {(() => {
+                        console.log("state lignes", lignes);
+
+                        return lignes.map((ligne) => (
+                          <div key={ligne.id} className="rounded-lg border p-4">
+                            <p className="font-bold">{ligne.reference_lm}</p>
+                            <p>{ligne.designation ?? "-"}</p>
+                            <p>Destination : {ligne.destination ?? "-"}</p>
+                            <p>Palettes : {ligne.nombre_palettes}</p>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  )}
 
                 </div>
 
