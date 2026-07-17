@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { Building2, PackageSearch, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { RayonsService } from "@/services/rayons";
@@ -289,11 +288,8 @@ export default function CaristePage() {
   return (
     <main className="min-h-screen bg-[#090D0F] pb-10 text-white">
       <header className="border-b border-[#78BE20] bg-[#11181C] shadow-lg shadow-black/20">
-        <div className="mx-auto flex max-w-lg items-center gap-4 px-4 py-4 sm:px-6">
-          <div className="flex h-14 w-20 items-center justify-center rounded-xl bg-white p-1">
-            <Image src="/logo-lm.webp" alt="Leroy Merlin" width={68} height={48} preload className="h-auto max-h-11 w-auto object-contain" />
-          </div>
-          <div>
+        <div className="mx-auto flex max-w-lg items-center px-5 py-5 sm:px-6">
+          <div className="min-w-0">
             <p className="text-xl font-black tracking-[0.16em]">DOCK<span className="text-[#78BE20]">FLOW</span></p>
             <p className="mt-1 text-xs font-bold tracking-[0.18em] text-[#AAB2B7]">MODE CARISTE</p>
           </div>
@@ -313,6 +309,7 @@ export default function CaristePage() {
             }`}
           >
             <Search className={`mr-5 shrink-0 ${mode === "reference" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
+            <span className="mr-5 h-12 w-px shrink-0 bg-current opacity-25" />
             Référence LM
           </button>
 
@@ -324,6 +321,7 @@ export default function CaristePage() {
             }`}
           >
             <PackageSearch className={`mr-5 shrink-0 ${mode === "commande" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
+            <span className="mr-5 h-12 w-px shrink-0 bg-current opacity-25" />
             Commande
           </button>
 
@@ -335,6 +333,7 @@ export default function CaristePage() {
             }`}
           >
             <Building2 className={`mr-5 shrink-0 ${mode === "rayon" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
+            <span className="mr-5 h-12 w-px shrink-0 bg-current opacity-25" />
             Rayon
           </button>
         </div>
