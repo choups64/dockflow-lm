@@ -206,17 +206,34 @@ export default function CaristePage() {
     return chargerLignes((data ?? []) as Arrivage[], referenceLM);
   }
 
-  async function rechercherParRayon(rayonId: string) {
-    if (!rayonId) return;
+  async function rechercherParRayon(codeRayon: string) {
+    if (!codeRayon) return;
+
+    console.log(`[RAYON] Rayon sélectionné : ${codeRayon}`);
+
+    const rayon = rayons.find((item) => item.code === codeRayon);
+    console.log("[RAYON] Identifiant rayon résolu :", rayon?.id);
+
+    if (!rayon) {
+      return [];
+    }
 
     const { data, error } = await supabase
       .from("arrivages")
       .select("*, rayon:rayons(id, code, nom)")
-      .eq("rayon_id", Number(rayonId))
-      .in("statut", STATUTS_ACTIFS);
+      .eq("rayon_id", rayon.id);
 
     if (error) throw error;
-    return chargerLignes((data ?? []) as Arrivage[]);
+
+    const arrivagesBruts = (data ?? []) as Arrivage[];
+    console.log("[RAYON] Arrivages bruts trouvés :", arrivagesBruts);
+
+    const arrivagesActifs = arrivagesBruts.filter((arrivage) =>
+      STATUTS_ACTIFS.includes(arrivage.statut as (typeof STATUTS_ACTIFS)[number])
+    );
+    console.log("[RAYON] Arrivages après filtre statut :", arrivagesActifs);
+
+    return chargerLignes(arrivagesActifs);
   }
 
   async function lancerRecherche(rayonId?: string) {
@@ -312,9 +329,9 @@ export default function CaristePage() {
             <select
               value={rayonSelectionne}
               onChange={(event) => {
-                const rayonId = event.target.value;
-                setRayonSelectionne(rayonId);
-                if (rayonId) void lancerRecherche(rayonId);
+                const codeRayon = event.target.value;
+                setRayonSelectionne(codeRayon);
+                if (codeRayon) void lancerRecherche(codeRayon);
               }}
               disabled={loadingRayons}
               className="w-full rounded-xl border p-4 text-xl"
@@ -323,7 +340,7 @@ export default function CaristePage() {
                 {loadingRayons ? "Chargement des rayons..." : "Sélectionner un rayon..."}
               </option>
               {rayons.map((rayon) => (
-                <option key={rayon.id} value={rayon.id}>
+                <option key={rayon.id} value={rayon.code}>
                   {rayon.code} - {rayon.nom}
                 </option>
               ))}
