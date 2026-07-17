@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Search, PackageSearch, Building2 } from "lucide-react";
+import Image from "next/image";
+import { Building2, PackageSearch, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { RayonsService } from "@/services/rayons";
 
@@ -286,47 +287,64 @@ export default function CaristePage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-100">
-      <div className="mx-auto max-w-xl p-6">
-        <h1 className="mb-8 text-4xl font-bold text-[#78BE20]">
+    <main className="min-h-screen bg-[#090D0F] pb-10 text-white">
+      <header className="border-b border-[#78BE20] bg-[#11181C] shadow-lg shadow-black/20">
+        <div className="mx-auto flex max-w-lg items-center gap-4 px-4 py-4 sm:px-6">
+          <div className="flex h-14 w-20 items-center justify-center rounded-xl bg-white p-1">
+            <Image src="/logo-lm.webp" alt="Leroy Merlin" width={68} height={48} preload className="h-auto max-h-11 w-auto object-contain" />
+          </div>
+          <div>
+            <p className="text-xl font-black tracking-[0.16em]">DOCK<span className="text-[#78BE20]">FLOW</span></p>
+            <p className="mt-1 text-xs font-bold tracking-[0.18em] text-[#AAB2B7]">MODE CARISTE</p>
+          </div>
+        </div>
+      </header>
+      <div className="mx-auto max-w-lg px-4 py-6 sm:px-6">
+        <h1 className="sr-only">
           Mode Cariste
         </h1>
 
-        <div className="mb-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mb-6 space-y-3">
           <button
             onClick={() => void changerMode("reference")}
-            className={`rounded-2xl p-5 font-bold transition ${
-              mode === "reference" ? "bg-[#78BE20] text-white" : "bg-white"
+            aria-pressed={mode === "reference"}
+            className={`flex min-h-[112px] w-full items-center rounded-3xl border px-5 text-left text-xl font-black tracking-wide transition after:ml-auto after:text-3xl after:font-normal after:content-['›'] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 ${
+              mode === "reference" ? "border-[#9bd754] bg-[#78BE20] text-white shadow-inner shadow-[#4D8F12]" : "border-white/[0.08] bg-[#1A2226] text-white hover:bg-[#222C31]"
             }`}
           >
-            <Search className="mx-auto mb-3" size={34} />
+            <Search className={`mr-5 shrink-0 ${mode === "reference" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
             Référence LM
           </button>
 
           <button
             onClick={() => void changerMode("commande")}
-            className={`rounded-2xl p-5 font-bold transition ${
-              mode === "commande" ? "bg-[#78BE20] text-white" : "bg-white"
+            aria-pressed={mode === "commande"}
+            className={`flex min-h-[112px] w-full items-center rounded-3xl border px-5 text-left text-xl font-black tracking-wide transition after:ml-auto after:text-3xl after:font-normal after:content-['›'] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 ${
+              mode === "commande" ? "border-[#9bd754] bg-[#78BE20] text-white shadow-inner shadow-[#4D8F12]" : "border-white/[0.08] bg-[#1A2226] text-white hover:bg-[#222C31]"
             }`}
           >
-            <PackageSearch className="mx-auto mb-3" size={34} />
+            <PackageSearch className={`mr-5 shrink-0 ${mode === "commande" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
             Commande
           </button>
 
           <button
             onClick={() => void changerMode("rayon")}
-            className={`rounded-2xl p-5 font-bold transition ${
-              mode === "rayon" ? "bg-[#78BE20] text-white" : "bg-white"
+            aria-pressed={mode === "rayon"}
+            className={`flex min-h-[112px] w-full items-center rounded-3xl border px-5 text-left text-xl font-black tracking-wide transition after:ml-auto after:text-3xl after:font-normal after:content-['›'] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 ${
+              mode === "rayon" ? "border-[#9bd754] bg-[#78BE20] text-white shadow-inner shadow-[#4D8F12]" : "border-white/[0.08] bg-[#1A2226] text-white hover:bg-[#222C31]"
             }`}
           >
-            <Building2 className="mx-auto mb-3" size={34} />
+            <Building2 className={`mr-5 shrink-0 ${mode === "rayon" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
             Rayon
           </button>
         </div>
 
-        <div className="rounded-3xl bg-white p-6 shadow-xl">
+        <div className="rounded-3xl border border-white/[0.08] bg-[#11181C] p-5 shadow-xl shadow-black/20">
           {mode === "rayon" ? (
+            <div>
+            <label htmlFor="rayon" className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-[#AAB2B7]">Rayon</label>
             <select
+              id="rayon"
               value={rayonSelectionne}
               onChange={(event) => {
                 const codeRayon = event.target.value;
@@ -334,7 +352,7 @@ export default function CaristePage() {
                 if (codeRayon) void lancerRecherche(codeRayon);
               }}
               disabled={loadingRayons}
-              className="w-full rounded-xl border p-4 text-xl"
+              className="w-full rounded-2xl border border-white/[0.12] bg-[#1A2226] p-4 text-lg text-white outline-none transition focus:border-[#78BE20] focus:ring-2 focus:ring-[#78BE20]/40 disabled:opacity-60"
             >
               <option value="">
                 {loadingRayons ? "Chargement des rayons..." : "Sélectionner un rayon..."}
@@ -345,9 +363,14 @@ export default function CaristePage() {
                 </option>
               ))}
             </select>
+            </div>
           ) : (
             <form onSubmit={soumettreRecherche}>
+              <label htmlFor="recherche" className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-[#AAB2B7]">
+                {mode === "reference" ? "Référence LM" : "Numéro de commande"}
+              </label>
               <input
+                id="recherche"
                 value={recherche}
                 onChange={(event) => setRecherche(event.target.value)}
                 inputMode={mode === "reference" ? "numeric" : undefined}
@@ -356,12 +379,12 @@ export default function CaristePage() {
                     ? "Référence Leroy Merlin..."
                     : "Numéro de commande..."
                 }
-                className="w-full rounded-xl border p-4 text-xl"
+                className="w-full rounded-2xl border border-white/[0.12] bg-[#1A2226] p-4 text-lg text-white placeholder:text-[#AAB2B7] outline-none transition focus:border-[#78BE20] focus:ring-2 focus:ring-[#78BE20]/40"
               />
 
               <button
                 type="submit"
-                className="mt-5 w-full rounded-xl bg-[#78BE20] py-4 text-lg font-bold text-white hover:bg-[#63a71b]"
+                className="mt-5 min-h-14 w-full rounded-2xl bg-[#78BE20] py-4 text-lg font-black tracking-wide text-white shadow-lg shadow-[#4D8F12]/20 transition hover:bg-[#4D8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50"
               >
                 Rechercher
               </button>
@@ -369,15 +392,15 @@ export default function CaristePage() {
           )}
         </div>
 
-        <div className="mt-8 rounded-3xl bg-white p-6 shadow-xl">
+        <div className="mt-6 rounded-3xl border border-white/[0.08] bg-[#11181C] p-5 shadow-xl shadow-black/20" aria-live="polite">
           <h2 className="mb-4 text-xl font-bold">Résultat</h2>
 
           {loading ? (
-            <div className="py-10 text-center">Recherche...</div>
+            <div className="py-10 text-center text-[#AAB2B7]">Recherche...</div>
           ) : erreur ? (
-            <div className="py-12 text-center text-slate-500">{erreur}</div>
+            <div className="rounded-2xl border border-[#78BE20]/30 bg-[#1A2226] px-4 py-10 text-center text-[#AAB2B7]">{erreur}</div>
           ) : !rechercheEffectuee ? (
-            <div className="py-12 text-center text-slate-400">
+            <div className="rounded-2xl border border-dashed border-white/[0.12] px-4 py-10 text-center text-[#AAB2B7]">
               Choisissez un mode de recherche.
             </div>
           ) : (
@@ -387,31 +410,34 @@ export default function CaristePage() {
                 const rayon = afficherRayon(arrivage);
 
                 return (
-                  <div key={arrivage.id} className="rounded-xl border p-5">
-                    <p className="text-lg font-bold">Commande {arrivage.commande}</p>
-                    <p>Fournisseur : {arrivage.fournisseur ?? "-"}</p>
-                    <p>Livraison : {arrivage.date_arrivee ?? "-"}</p>
-                    {rayon && <p>Rayon : {rayon}</p>}
+                  <div key={arrivage.id} className="overflow-hidden rounded-3xl border border-white/[0.08] bg-[#1A2226]">
+                    <div className="border-b border-white/[0.08] p-5">
+                    <p className="text-xs font-black uppercase tracking-[0.16em] text-[#AAB2B7]">Commande</p>
+                    <p className="mt-1 text-3xl font-black tracking-wide text-white">{arrivage.commande}</p>
+                    <p className="mt-4 text-sm text-[#AAB2B7]">Livraison : <span className="font-semibold text-white">{arrivage.date_arrivee ?? "-"}</span></p>
+                    {rayon && <p className="mt-2 text-sm text-[#AAB2B7]">Rayon : <span className="font-semibold text-white">{rayon}</span></p>}
+                    {arrivage.fournisseur && <p className="mt-2 text-sm text-[#AAB2B7]">{arrivage.fournisseur}</p>}
 
-                    <span className="mt-3 inline-block rounded-full bg-green-100 px-3 py-1 text-sm font-bold text-green-700">
+                    <span className="mt-5 inline-block rounded-full bg-[#78BE20]/15 px-3 py-1 text-xs font-black uppercase tracking-wide text-[#9bd754]">
                       {arrivage.statut}
                     </span>
+                    </div>
 
-                    <div className="mt-5 space-y-3 border-t pt-4">
+                    <div className="space-y-3 p-4">
                       {lignesRegroupees.map((ligne) => (
-                        <div key={ligne.reference_lm} className="rounded-lg border p-4">
-                          <p className="font-bold">{ligne.reference_lm}</p>
-                          <p>{ligne.designation ?? "-"}</p>
-                          <p className="mt-3 font-semibold">
+                        <div key={ligne.reference_lm} className="rounded-2xl border border-white/[0.08] bg-[#222C31] p-4">
+                          <p className="text-xl font-black tracking-wide text-white">{ligne.reference_lm}</p>
+                          <p className="mt-1 text-sm text-[#AAB2B7]">{ligne.designation ?? "-"}</p>
+                          <p className="mt-4 border-y border-white/[0.08] py-3 text-lg font-black text-[#9bd754]">
                             Total palettes : {ligne.totalPalettes}
                           </p>
 
-                          <div className="mt-3 space-y-1">
+                          <div className="mt-4 space-y-2">
                             {ligne.destinations.map((destination) => (
-                              <p key={destination.destination ?? "sans-destination"}>
-                                {destination.destination ?? "-"} : {destination.nombre_palettes}{" "}
-                                {destination.nombre_palettes === 1 ? "palette" : "palettes"}
-                              </p>
+                              <div key={destination.destination ?? "sans-destination"} className="flex min-h-14 items-center justify-between rounded-xl border-l-4 border-[#78BE20] bg-[#11181C] px-4">
+                                <p className="font-bold uppercase tracking-wide text-white">{destination.destination ?? "-"}</p>
+                                <p className="text-2xl font-black text-[#9bd754]">{destination.nombre_palettes}</p>
+                              </div>
                             ))}
                           </div>
                         </div>
