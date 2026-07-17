@@ -8,6 +8,7 @@ import {
   Building2,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import type { EanResolutionResult } from "@/lib/eanResolver";
 
 type Arrivage = {
   id: string;
@@ -41,17 +42,13 @@ type LigneRegroupee = {
   destinations: DestinationRegroupee[];
 };
 
-export default function CaristePage() {
-  const [mode, setMode] = useState<
-    "ean" | "reference" | "commande" | "rayon"
-  >("ean");
+type ResultatScanEAN = {
+  arrivage: Arrivage;
+  lignes: LigneArrivage[];
+};
 
-  const [recherche, setRecherche] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [resultats, setResultats] = useState<Arrivage[]>([]);
-  const [lignes, setLignes] = useState<LigneArrivage[]>([]);
-
-  const lignesRegroupees = Array.from(
+function regrouperLignes(lignes: LigneArrivage[]): LigneRegroupee[] {
+  return Array.from(
     lignes.reduce((groupes, ligne) => {
       const palettes = Number(ligne.nombre_palettes);
       const nombrePalettes = Number.isFinite(palettes) ? palettes : 0;
@@ -84,6 +81,105 @@ export default function CaristePage() {
       return groupes;
     }, new Map<string, LigneRegroupee>()).values()
   );
+}
+
+export default function CaristePage() {
+  const [mode, setMode] = useState<
+    "ean" | "reference" | "commande" | "rayon"
+  >("ean");
+
+  const [recherche, setRecherche] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [resultats, setResultats] = useState<Arrivage[]>([]);
+  const [lignes, setLignes] = useState<LigneArrivage[]>([]);
+  const [ean, setEan] = useState("");
+  const [rechercheEANEnCours, setRechercheEANEnCours] = useState(false);
+  const [erreurEAN, setErreurEAN] = useState("");
+  const [resultatsEAN, setResultatsEAN] = useState<ResultatScanEAN[]>([]);
+
+  const lignesRegroupees = regrouperLignes(lignes);
+
+  async function rechercherDepuisEAN() {
+    const eanSaisi = ean.trim();
+    if (!eanSaisi) {
+      setErreurEAN("Saisissez ou scannez un code EAN.");
+      return;
+    }
+
+    setRechercheEANEnCours(true);
+    setErreurEAN("");
+    setResultatsEAN([]);
+
+    let resolution: EanResolutionResult;
+
+    try {
+      const response = await fetch(`/api/ean/resolve?ean=${encodeURIComponent(eanSaisi)}`);
+      resolution = (await response.json()) as EanResolutionResult;
+    } catch (error) {
+      console.error("Erreur lors de la résolution EAN :", error);
+      setErreurEAN(
+        "La recherche automatique est temporairement indisponible. Utilisez la recherche par numéro de commande."
+      );
+      setRechercheEANEnCours(false);
+      return;
+    }
+
+    if (!resolution.success) {
+      setErreurEAN(resolution.message);
+      setRechercheEANEnCours(false);
+      return;
+    }
+
+    const { data: lignesTrouvees, error: erreurLignes } = await supabase
+      .from("arrivage_lignes")
+      .select("*")
+      .eq("reference_lm", resolution.referenceLM);
+
+    if (erreurLignes) {
+      console.error("Erreur Supabase lors de la recherche EAN :", erreurLignes);
+      setErreurEAN("Impossible de rechercher les arrivages correspondants.");
+      setRechercheEANEnCours(false);
+      return;
+    }
+
+    const lignesEAN = (lignesTrouvees ?? []) as LigneArrivage[];
+    const idsArrivages = [...new Set(lignesEAN.map((ligne) => ligne.arrivage_id))];
+
+    if (idsArrivages.length === 0) {
+      setErreurEAN("Aucun arrivage en préparation ne contient cette référence.");
+      setRechercheEANEnCours(false);
+      return;
+    }
+
+    const { data: arrivagesTrouves, error: erreurArrivages } = await supabase
+      .from("arrivages")
+      .select("*")
+      .in("id", idsArrivages)
+      .in("statut", ["EN_PREPARATION", "PRET_A_RECEVOIR"]);
+
+    if (erreurArrivages) {
+      console.error("Erreur Supabase lors du chargement des arrivages :", erreurArrivages);
+      setErreurEAN("Impossible de charger les arrivages correspondants.");
+      setRechercheEANEnCours(false);
+      return;
+    }
+
+    const arrivagesActifs = (arrivagesTrouves ?? []) as Arrivage[];
+    const resultats = arrivagesActifs.map((arrivage) => ({
+      arrivage,
+      lignes: lignesEAN.filter((ligne) => ligne.arrivage_id === arrivage.id),
+    }));
+
+    console.log(`[EAN] Recherche Supabase terminée : ${resultats.length} commande(s) trouvée(s)`);
+
+    if (resultats.length === 0) {
+      setErreurEAN("Aucun arrivage en préparation ne contient cette référence.");
+    } else {
+      setResultatsEAN(resultats);
+    }
+
+    setRechercheEANEnCours(false);
+  }
 
   async function rechercher() {
     console.log("Recherche lancée");
@@ -156,6 +252,74 @@ export default function CaristePage() {
         <h1 className="text-4xl font-bold text-[#78BE20] mb-8">
           Mode Cariste
         </h1>
+
+        <section className="mb-8 rounded-3xl bg-white p-6 shadow-xl">
+          <h2 className="text-xl font-bold">Scanner un produit</h2>
+
+          <input
+            value={ean}
+            onChange={(event) => setEan(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                rechercherDepuisEAN();
+              }
+            }}
+            inputMode="numeric"
+            placeholder="Scanner ou saisir un code EAN"
+            className="mt-4 w-full rounded-xl border p-4 text-xl"
+          />
+
+          <button
+            type="button"
+            onClick={rechercherDepuisEAN}
+            disabled={rechercheEANEnCours}
+            className="mt-5 w-full rounded-xl bg-[#78BE20] py-4 text-lg font-bold text-white hover:bg-[#63a71b] disabled:opacity-60"
+          >
+            Rechercher
+          </button>
+
+          {rechercheEANEnCours && (
+            <p className="mt-4 text-slate-600">Recherche du produit…</p>
+          )}
+
+          {erreurEAN && (
+            <p className="mt-4 text-red-700">{erreurEAN}</p>
+          )}
+
+          {resultatsEAN.length > 0 && (
+            <div className="mt-6 space-y-4 border-t pt-5">
+              {resultatsEAN.map(({ arrivage, lignes: lignesArrivage }) => {
+                const lignesParReference = regrouperLignes(lignesArrivage);
+
+                return (
+                  <div key={arrivage.id} className="rounded-xl border p-5">
+                    <p className="text-lg font-bold">Commande {arrivage.commande}</p>
+                    <p>Fournisseur : {arrivage.fournisseur ?? "-"}</p>
+                    <p>Livraison : {arrivage.date_arrivee ?? "-"}</p>
+
+                    <div className="mt-4 space-y-3">
+                      {lignesParReference.map((ligne) => (
+                        <div key={ligne.reference_lm} className="rounded-lg border p-4">
+                          <p className="font-bold">Référence {ligne.reference_lm}</p>
+                          <p>{ligne.designation ?? "-"}</p>
+                          <p className="mt-2 font-semibold">
+                            {ligne.totalPalettes} palettes au total
+                          </p>
+                          {ligne.destinations.map((destination) => (
+                            <p key={destination.destination ?? "sans-destination"}>
+                              {destination.destination ?? "-"} : {destination.nombre_palettes}{" "}
+                              {destination.nombre_palettes === 1 ? "palette" : "palettes"}
+                            </p>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
 
         <div className="grid grid-cols-2 gap-4 mb-8">
 
@@ -300,10 +464,7 @@ export default function CaristePage() {
 
                   {mode === "commande" && (
                     <div className="mt-5 space-y-3 border-t pt-4">
-                      {(() => {
-                        console.log("lignes regroupées", lignesRegroupees);
-
-                        return lignesRegroupees.map((ligne) => (
+                      {lignesRegroupees.map((ligne) => (
                           <div key={ligne.reference_lm} className="rounded-lg border p-4">
                             <p className="font-bold">{ligne.reference_lm}</p>
                             <p>{ligne.designation ?? "-"}</p>
@@ -320,8 +481,7 @@ export default function CaristePage() {
                               ))}
                             </div>
                           </div>
-                        ));
-                      })()}
+                        ))}
                     </div>
                   )}
 
