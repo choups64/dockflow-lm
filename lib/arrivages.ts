@@ -45,18 +45,50 @@ export type ArrivagePreparation = {
   commande: string;
   fournisseur: string;
   dateLivraison: string | null;
+  rayonId: string;
   lignes: LignePreparation[];
 };
 
+type ArrivagePreparationMiseAJour = Omit<ArrivagePreparation, "rayonId">;
+
 export async function creerArrivagePreparation(data: ArrivagePreparation) {
+  console.log("[ARRIVAGE] Commande :", data.commande);
+  console.log("[ARRIVAGE] Rayon reçu :", data.rayonId);
+
+  const rayonId = Number(data.rayonId);
+
+  if (!Number.isInteger(rayonId) || rayonId <= 0) {
+    console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible");
+    throw new Error(
+      "Impossible de créer l'arrivage : aucun rayon n'est associé à votre profil."
+    );
+  }
+
+  const { data: rayon, error: rayonError } = await supabase
+    .from("rayons")
+    .select("id, code, nom")
+    .eq("id", rayonId)
+    .maybeSingle();
+
+  if (rayonError || !rayon) {
+    console.error("[ARRIVAGE] Création bloquée : rayon invalide", rayonError);
+    throw rayonError ?? new Error("Rayon introuvable");
+  }
+
+  console.log(`[ARRIVAGE] Rayon validé : ${rayon.code} - ${rayon.nom}`);
+  console.log("[ARRIVAGE] Création avec rayon_id :", rayon.id);
+
   const { data: arrivage, error } = await supabase.from("arrivages").insert({
     commande: data.commande,
     fournisseur: data.fournisseur,
     date_arrivee: data.dateLivraison,
     statut: "EN_PREPARATION",
+    rayon_id: rayon.id,
   }).select().single();
 
   if (error) throw error;
+
+  console.log("[ARRIVAGE] Arrivage créé :", arrivage.id);
 
   if (data.lignes.length) {
     const lignes = data.lignes.flatMap(l =>
@@ -92,7 +124,7 @@ export async function getLignesArrivage(arrivageId:string){
 
 export async function updateArrivage(
   id:string,
-  data:ArrivagePreparation,
+  data:ArrivagePreparationMiseAJour,
   statut?: StatutArrivage
 ){
   const {error}=await supabase.from("arrivages").update({

@@ -16,6 +16,7 @@ import {
   updateArrivage,
   updateStatutArrivage,
 } from "@/lib/arrivages";
+import { ProfileService } from "@/services/profile";
 
 type Repartition = {
   palettes: number;
@@ -28,6 +29,12 @@ type Ligne = {
   quantite: number;
   repartitions?: Repartition[];
   ean?: string | null;
+};
+
+type RayonProfil = {
+  id: number;
+  code: string;
+  nom: string;
 };
 
 type CommandeBacko = {
@@ -52,6 +59,10 @@ export default function PreparationArrivagePage({
   const [globalCommande, setGlobalCommande] = useState(true);
   const [destinationGlobale, setDestinationGlobale] = useState("");
   const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [rayonsDuProfil, setRayonsDuProfil] = useState<RayonProfil[]>([]);
+  const [rayonId, setRayonId] = useState("");
+  const [chargementRayon, setChargementRayon] = useState(mode === "create");
+  const [erreurRayon, setErreurRayon] = useState<string | null>(null);
 
   useEffect(() => {
   async function initialiser() {
@@ -101,6 +112,31 @@ setCommande({
 });
     }
 
+    if (mode === "create") {
+      try {
+        const profil = await ProfileService.getCurrentProfile();
+        const rayons = profil.rayons as RayonProfil[];
+
+        setRayonsDuProfil(rayons);
+
+        if (rayons.length === 1) {
+          setRayonId(String(rayons[0].id));
+        } else if (rayons.length === 0) {
+          console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible");
+          setErreurRayon(
+            "Impossible de créer l'arrivage : aucun rayon n'est associé à votre profil."
+          );
+        }
+      } catch (error) {
+        console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible", error);
+        setErreurRayon(
+          "Impossible de créer l'arrivage : aucun rayon n'est associé à votre profil."
+        );
+      } finally {
+        setChargementRayon(false);
+      }
+    }
+
     getDestinations()
       .then(setDestinations)
       .catch(console.error);
@@ -111,6 +147,17 @@ setCommande({
 
   async function enregistrer(statutApresEnregistrement?: StatutArrivage) {
     if (!commande) return;
+
+    if (mode === "create" && !rayonId) {
+      const message =
+        erreurRayon ??
+        "Veuillez sélectionner un rayon avant d'enregistrer l'arrivage.";
+
+      console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible");
+      toast.error(message);
+      return;
+    }
+
     const currentCommande = commande;
 
     let dateISO: string | null = null;
@@ -150,6 +197,7 @@ setCommande({
       commande: currentCommande.commande,
       fournisseur: currentCommande.fournisseur,
       dateLivraison: dateISO,
+      rayonId,
       lignes: currentCommande.lignes,
     });
 
@@ -200,6 +248,39 @@ if (!commande) {
         </div>
 
         <div className="mb-8 rounded-2xl bg-white border p-6 shadow-sm">
+
+          {mode === "create" && (
+            <div className="mb-5">
+              {chargementRayon ? (
+                <p className="text-slate-500">Chargement du rayon associé...</p>
+              ) : erreurRayon ? (
+                <p className="text-red-600">{erreurRayon}</p>
+              ) : rayonsDuProfil.length === 1 ? (
+                <p className="font-semibold">
+                  Rayon associé : {rayonsDuProfil[0].code} - {rayonsDuProfil[0].nom}
+                </p>
+              ) : (
+                <>
+                  <label className="mb-2 block font-semibold" htmlFor="rayon-arrivage">
+                    Rayon de l&apos;arrivage
+                  </label>
+                  <select
+                    id="rayon-arrivage"
+                    value={rayonId}
+                    onChange={(event) => setRayonId(event.target.value)}
+                    className="w-full rounded-xl border p-3"
+                  >
+                    <option value="">Choisir un rayon...</option>
+                    {rayonsDuProfil.map((rayon) => (
+                      <option key={rayon.id} value={rayon.id}>
+                        {rayon.code} - {rayon.nom}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              )}
+            </div>
+          )}
 
           <label className="flex items-center gap-3 mb-5">
             <input
