@@ -1,177 +1,129 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
-  FileSpreadsheet,
-  Package,
-  Truck,
-  LogOut,
   ArrowRight,
+  ClipboardCheck,
+  FileSpreadsheet,
+  PackageOpen,
+  Plus,
+  Truck,
 } from "lucide-react";
+import RRSidebar from "@/components/dashboard/RRSidebar";
+import { supabase } from "@/lib/supabase";
+
+type Arrivage = { statut: string | null };
+type LigneArrivage = { nombre_palettes: number | string | null };
+
+const STATUTS_ACTIFS = ["EN_PREPARATION", "PREPARATION", "PRET_A_RECEVOIR"];
+const STATUTS_PREPARATION = ["EN_PREPARATION", "PREPARATION"];
 
 export default function DashboardRR() {
-  const router = useRouter();
+  const [prenom, setPrenom] = useState<string | null>(null);
+  const [arrivagesActifs, setArrivagesActifs] = useState(0);
+  const [palettesTotales, setPalettesTotales] = useState(0);
+  const [enPreparation, setEnPreparation] = useState(0);
 
-  const deconnexion = () => {
-    localStorage.removeItem("user");
-    router.push("/");
-  };
+  useEffect(() => {
+    async function chargerIdentite() {
+      const utilisateur = localStorage.getItem("user");
+      if (!utilisateur) return;
+
+      try {
+        setPrenom(JSON.parse(utilisateur).prenom ?? null);
+      } catch {
+        setPrenom(null);
+      }
+    }
+
+    async function chargerStatistiques() {
+      const [{ data: arrivages, error: erreurArrivages }, { data: lignes, error: erreurLignes }] = await Promise.all([
+        supabase.from("arrivages").select("statut"),
+        supabase.from("arrivage_lignes").select("nombre_palettes"),
+      ]);
+
+      if (erreurArrivages || erreurLignes) {
+        console.error("Impossible de charger les statistiques du dashboard", erreurArrivages ?? erreurLignes);
+        return;
+      }
+
+      const arrivagesData = (arrivages ?? []) as Arrivage[];
+      const lignesData = (lignes ?? []) as LigneArrivage[];
+      setArrivagesActifs(arrivagesData.filter((arrivage) => STATUTS_ACTIFS.includes(arrivage.statut ?? "")).length);
+      setEnPreparation(arrivagesData.filter((arrivage) => STATUTS_PREPARATION.includes(arrivage.statut ?? "")).length);
+      setPalettesTotales(lignesData.reduce((total, ligne) => total + (Number(ligne.nombre_palettes) || 0), 0));
+    }
+
+    void chargerIdentite();
+    void chargerStatistiques();
+  }, []);
+
+  const nomAffiche = prenom ? `Bonjour ${prenom}` : "Bonjour";
 
   return (
-    <main className="min-h-screen bg-slate-100">
+    <main className="min-h-screen bg-[#F6F8FA] text-[#101820] lg:flex">
+      <RRSidebar />
 
-      {/* HEADER */}
+      <div className="min-w-0 flex-1">
+        <header className="border-b border-[#E3E8EC] bg-white px-5 py-4 lg:hidden">
+          <p className="text-lg font-black tracking-[0.12em]">DOCK<span className="text-[#78BE20]">FLOW</span></p>
+          <p className="text-xs font-bold tracking-[0.16em] text-[#66727A]">MODE RR</p>
+        </header>
 
-      <header className="bg-white border-b shadow-sm">
-
-        <div className="max-w-7xl mx-auto px-8 h-24 flex items-center justify-between">
-
-          <div>
-
-            <h1 className="text-4xl font-bold text-slate-800">
-              Bonjour Séverine 👋
-            </h1>
-
-            <p className="text-slate-500">
-              Responsable de rayon
-            </p>
-
-          </div>
-
-          <div className="flex items-center gap-6">
-
-            <div className="text-right">
-
-              <p className="text-slate-500">
-                DockFlow LM
-              </p>
-
-              <p className="text-3xl font-bold text-[#78BE20]">
-                Dashboard
-              </p>
-
+        <div className="mx-auto max-w-7xl p-5 sm:p-8">
+          <section className="relative overflow-hidden rounded-3xl bg-[#0B1115] px-6 py-8 text-white sm:px-10 sm:py-10">
+            <div className="relative z-10 max-w-xl">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#AAB2B7]">Responsable de rayon</p>
+              <h1 className="mt-3 text-3xl font-black sm:text-4xl">
+                {nomAffiche} <span aria-hidden="true">👋</span>
+              </h1>
+              <p className="mt-4 text-base text-slate-300 sm:text-lg">Optimisez vos flux logistiques avec <span className="font-bold text-[#9bd754]">DockFlow</span>.</p>
             </div>
+            <div className="absolute -right-8 bottom-0 hidden h-44 w-80 rounded-tl-[6rem] border-l border-t border-white/10 bg-[#11181C] lg:block">
+              <Truck className="absolute bottom-10 left-12 text-[#78BE20]" size={84} aria-hidden="true" />
+              <PackageOpen className="absolute bottom-8 right-12 text-white/70" size={52} aria-hidden="true" />
+              <div className="absolute bottom-0 left-0 right-0 h-5 bg-[#78BE20]/30" />
+            </div>
+          </section>
 
-            <button
-              onClick={deconnexion}
-              className="flex items-center gap-2 bg-red-500 hover:bg-red-600 text-white px-5 py-3 rounded-2xl transition shadow"
-            >
-              <LogOut size={20} />
-              Déconnexion
-            </button>
+          <section className="mt-7 grid gap-4 sm:grid-cols-3">
+            <StatCard icon={<Truck size={24} />} label="Arrivages actifs" value={arrivagesActifs} />
+            <StatCard icon={<PackageOpen size={24} />} label="Palettes totales" value={palettesTotales} />
+            <StatCard icon={<ClipboardCheck size={24} />} label="En préparation" value={enPreparation} />
+          </section>
 
-          </div>
-
+          <section className="mt-9">
+            <h2 className="text-2xl font-black">Actions rapides</h2>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              <Link href="/dashboard/nouvel-arrivage" className="flex min-h-32 items-center gap-5 rounded-3xl bg-[#78BE20] p-6 text-white shadow-sm transition hover:bg-[#4F8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/40">
+                <span className="rounded-2xl bg-white/15 p-4"><Plus size={30} aria-hidden="true" /></span>
+                <span className="flex-1"><span className="block text-xl font-black">Nouvel arrivage</span><span className="mt-1 block text-sm text-white/80">Préparer une commande</span></span>
+                <ArrowRight size={26} aria-hidden="true" />
+              </Link>
+              <Link href="/dashboard/arrivages" className="flex min-h-32 items-center gap-5 rounded-3xl border border-[#E3E8EC] bg-white p-6 shadow-sm transition hover:border-[#78BE20] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/30">
+                <span className="rounded-2xl bg-[#EEF7E5] p-4 text-[#4F8F12]"><PackageOpen size={30} aria-hidden="true" /></span>
+                <span className="flex-1"><span className="block text-xl font-black">Mes arrivages</span><span className="mt-1 block text-sm text-[#66727A]">Consulter et modifier les arrivages</span></span>
+                <ArrowRight size={26} className="text-[#4F8F12]" aria-hidden="true" />
+              </Link>
+            </div>
+            <Link href="/import" className="mt-4 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-[#4F8F12] hover:bg-[#EEF7E5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78BE20]">
+              <FileSpreadsheet size={18} aria-hidden="true" /> Importer une capture BACKO
+            </Link>
+          </section>
         </div>
-
-      </header>
-
-      {/* CONTENU */}
-
-      <div className="max-w-7xl mx-auto p-8">
-
-        {/* STATISTIQUES */}
-
-        <div className="grid grid-cols-2 gap-6 mb-8">
-
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
-
-            <p className="text-slate-500">
-              Arrivages
-            </p>
-
-            <h2 className="text-5xl font-bold text-[#78BE20] mt-3">
-              12
-            </h2>
-
-          </div>
-
-          <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
-
-            <p className="text-slate-500">
-              Palettes
-            </p>
-
-            <h2 className="text-5xl font-bold text-[#78BE20] mt-3">
-              48
-            </h2>
-
-          </div>
-
-        </div>
-
-        {/* ACCÈS RAPIDES */}
-
-        <div className="grid grid-cols-2 gap-6">
-
-          <Link
-            href="/import"
-            className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 hover:border-[#78BE20] hover:shadow-lg transition"
-          >
-            <FileSpreadsheet
-              size={42}
-              className="text-[#78BE20]"
-            />
-
-            <h2 className="text-2xl font-bold mt-6">
-              Import BACKO
-            </h2>
-
-            <p className="text-slate-500 mt-2">
-              Importer une capture BACKO.
-            </p>
-
-            <ArrowRight className="mt-6 text-[#78BE20]" />
-
-          </Link>
-
-          <Link
-            href="/dashboard/nouvel-arrivage"
-            className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 hover:border-[#78BE20] hover:shadow-lg transition"
-          >
-            <Package
-              size={42}
-              className="text-[#78BE20]"
-            />
-
-            <h2 className="text-2xl font-bold mt-6">
-              Nouvel arrivage
-            </h2>
-
-            <p className="text-slate-500 mt-2">
-              Préparer un nouvel arrivage.
-            </p>
-
-            <ArrowRight className="mt-6 text-[#78BE20]" />
-
-          </Link>
-
-          <Link
-            href="/dashboard/arrivages"
-            className="bg-white rounded-3xl p-8 shadow-sm border border-slate-200 hover:border-[#78BE20] hover:shadow-lg transition"
-          >
-            <Truck
-              size={42}
-              className="text-[#78BE20]"
-            />
-
-            <h2 className="text-2xl font-bold mt-6">
-              Mes arrivages
-            </h2>
-
-            <p className="text-slate-500 mt-2">
-              Consulter et modifier les arrivages.
-            </p>
-
-            <ArrowRight className="mt-6 text-[#78BE20]" />
-
-          </Link>
-
-        </div>
-
       </div>
-
     </main>
+  );
+}
+
+function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
+  return (
+    <div className="rounded-2xl border border-[#E3E8EC] bg-white p-5 shadow-sm">
+      <div className="flex items-center gap-4">
+        <span className="rounded-xl bg-[#EEF7E5] p-3 text-[#4F8F12]">{icon}</span>
+        <div><p className="text-sm font-semibold text-[#66727A]">{label}</p><p className="mt-1 text-3xl font-black">{value}</p></div>
+      </div>
+    </div>
   );
 }
