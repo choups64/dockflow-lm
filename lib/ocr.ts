@@ -65,15 +65,22 @@ function detecterBandeSelectionnee(source: HTMLImageElement): BandeSelectionnee 
   return bande;
 }
 
-function recadrerBande(source: HTMLImageElement, bande: BandeSelectionnee): string {
+function recadrerColonne(
+  source: HTMLImageElement,
+  bande: BandeSelectionnee,
+  debutRatio: number,
+  finRatio: number
+): string {
+  const x = Math.floor(source.naturalWidth * debutRatio);
+  const largeur = Math.floor(source.naturalWidth * finRatio) - x;
   const canvas = document.createElement("canvas");
   const echelle = 2;
-  canvas.width = bande.largeur * echelle;
+  canvas.width = largeur * echelle;
   canvas.height = bande.hauteur * echelle;
   const context = canvas.getContext("2d", { willReadFrequently: true });
   if (!context) throw new Error("Canvas indisponible pour le recadrage OCR");
 
-  context.drawImage(source, bande.x, bande.y, bande.largeur, bande.hauteur, 0, 0, canvas.width, canvas.height);
+  context.drawImage(source, x, bande.y, largeur, bande.hauteur, 0, 0, canvas.width, canvas.height);
   const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
 
   for (let offset = 0; offset < imageData.data.length; offset += 4) {
@@ -85,24 +92,27 @@ function recadrerBande(source: HTMLImageElement, bande: BandeSelectionnee): stri
   }
 
   context.putImageData(imageData, 0, 0);
-  console.log(`[OCR HIGHLIGHT] Bande de ligne recadrée : ${canvas.width}x${canvas.height} (x2)`);
   return canvas.toDataURL("image/png");
 }
 
-function extraireLigneSelectionnee(texte: string): string | null {
-  const reference = texte.match(/\b\d{8}\b/)?.[0];
-  if (!reference) return null;
+function normaliserReference(texte: string): string | null {
+  return texte.replace(/\D/g, "").match(/\d{8}/)?.[0] ?? null;
+}
 
-  const quantite = texte.match(/\b\d+[.,]00\b/)?.[0] ?? "";
-  let designation = texte
-    .replace(reference, "")
-    .replace(quantite, "")
-    .replace(/[^A-Za-zÀ-ÿ0-9\s-]/g, " ")
+function normaliserDesignation(texte: string): string {
+  return texte
+    .replace(/[^\p{L}\p{N}\s'-]/gu, " ")
     .replace(/\s+/g, " ")
-    .trim();
+    .trim()
+    .toUpperCase();
+}
 
-  if (designation.length < 3) designation = "-";
-  return `${reference} ${designation}${quantite ? ` ${quantite}` : ""}`;
+function normaliserQuantite(texte: string): number | null {
+  const valeur = texte.replace(",", ".").match(/\d+(?:\.\d+)?/)?.[0];
+  if (!valeur) return null;
+
+  const quantite = Math.round(Number(valeur));
+  return Number.isInteger(quantite) && quantite > 0 ? quantite : null;
 }
 
 export async function readImage(image: string): Promise<string> {
@@ -128,18 +138,48 @@ export async function readImage(image: string): Promise<string> {
   }
 
   const debutLocal = performance.now();
-  const resultatLocal = await Tesseract.recognize(recadrerBande(source, bande), "eng", {
-    logger: () => {},
-  });
-  const texteLocal = resultatLocal.data.text;
-  console.log("[OCR HIGHLIGHT] Texte reconnu :", texteLocal);
+  const [referenceImage, designationImage, quantiteImage] = [
+    recadrerColonne(source, bande, 0.035, 0.14),
+    recadrerColonne(source, bande, 0.15, 0.38),
+    recadrerColonne(source, bande, 0.45, 0.545),
+  ];
+  console.log("[OCR HIGHLIGHT] Bande de ligne recadrée : Réf 3.5–14 %, Désignation 15–38 %, Qté 45–54.5 % (x2)");
+
+  const worker = await Tesseract.createWorker("eng", 1, { logger: () => {} });
+  let referenceBrute = "";
+  let designationBrute = "";
+  let quantiteBrute = "";
+
+  try {
+    referenceBrute = (await worker.recognize(referenceImage)).data.text;
+    designationBrute = (await worker.recognize(designationImage)).data.text;
+    quantiteBrute = (await worker.recognize(quantiteImage)).data.text;
+  } finally {
+    await worker.terminate();
+  }
+
+  console.log("[OCR HIGHLIGHT] Référence brute :", referenceBrute);
+  console.log("[OCR HIGHLIGHT] Désignation brute :", designationBrute);
+  console.log("[OCR HIGHLIGHT] Quantité brute :", quantiteBrute);
   console.log(`[OCR HIGHLIGHT] OCR local : ${(performance.now() - debutLocal).toFixed(1)} ms`);
 
-  const ligne = extraireLigneSelectionnee(texteLocal);
-  if (ligne) {
-    const reference = ligne.match(/\b\d{8}\b/)![0];
-    console.log(`[OCR HIGHLIGHT] Référence extraite : ${reference}`);
-    if (!new RegExp(`\\b${reference}\\b`).test(texte)) {
+  const reference = normaliserReference(referenceBrute);
+  const designation = normaliserDesignation(designationBrute);
+  const quantite = normaliserQuantite(quantiteBrute);
+
+  if (reference && designation && quantite) {
+    const ligne = `${reference} ${designation} ${quantite}.00`;
+    console.log(`[OCR HIGHLIGHT] Ligne normalisée : ${reference} | ${designation} | ${quantite}`);
+    const lignes = texte.split("\n");
+    const indexLigneExistante = lignes.findIndex((ligneExistante) =>
+      new RegExp(`\\b${reference}\\b`).test(ligneExistante)
+    );
+
+    if (indexLigneExistante >= 0) {
+      lignes[indexLigneExistante] = ligne;
+      texte = lignes.join("\n");
+      console.log("[OCR HIGHLIGHT] Ligne fusionnée au résultat principal");
+    } else {
       texte += `\n${ligne}`;
       console.log("[OCR HIGHLIGHT] Ligne fusionnée au résultat principal");
     }
