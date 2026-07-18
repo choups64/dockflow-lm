@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import {
   ArrowRight,
@@ -72,18 +73,23 @@ export default function DashboardRR() {
         </header>
 
         <div className="mx-auto max-w-7xl p-5 sm:p-8">
-          <section className="relative overflow-hidden rounded-3xl bg-[#0B1115] px-6 py-8 text-white sm:px-10 sm:py-10">
-            <div className="relative z-10 max-w-xl">
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#AAB2B7]">Responsable de rayon</p>
+          <section className="relative min-h-[250px] overflow-hidden rounded-3xl border border-[#E3E8EC] bg-white px-6 py-8 sm:min-h-[280px] sm:px-10 sm:py-10">
+            <div className="relative z-10 max-w-md">
+              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#66727A]">Responsable de rayon</p>
               <h1 className="mt-3 text-3xl font-black sm:text-4xl">
                 {nomAffiche} <span aria-hidden="true">👋</span>
               </h1>
-              <p className="mt-4 text-base text-slate-300 sm:text-lg">Optimisez vos flux logistiques avec <span className="font-bold text-[#9bd754]">DockFlow</span>.</p>
+              <p className="mt-4 text-base text-[#66727A] sm:text-lg">Optimisez vos flux logistiques avec <span className="font-bold text-[#4F8F12]">DockFlow</span>.</p>
             </div>
-            <div className="absolute -right-8 bottom-0 hidden h-44 w-80 rounded-tl-[6rem] border-l border-t border-white/10 bg-[#11181C] lg:block">
-              <Truck className="absolute bottom-10 left-12 text-[#78BE20]" size={84} aria-hidden="true" />
-              <PackageOpen className="absolute bottom-8 right-12 text-white/70" size={52} aria-hidden="true" />
-              <div className="absolute bottom-0 left-0 right-0 h-5 bg-[#78BE20]/30" />
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-full sm:w-3/5">
+              <Image
+                src="/images/rr-logistics-hero.webp"
+                alt="Camion, palettes et chariot élévateur sur un quai logistique"
+                fill
+                priority
+                sizes="(max-width: 640px) 100vw, 60vw"
+                className="object-contain object-right-bottom opacity-25 sm:opacity-100"
+              />
             </div>
           </section>
 
