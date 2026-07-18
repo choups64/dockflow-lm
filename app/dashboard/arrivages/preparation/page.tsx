@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trash2 } from "lucide-react";
 import PreparationLine from "@/components/arrivages/PreparationLine";
 import { getDestinations, type Destination } from "@/lib/destinations";
 import { toast } from "sonner";
@@ -17,6 +18,7 @@ import {
   updateStatutArrivage,
 } from "@/lib/arrivages";
 import { ProfileService } from "@/services/profile";
+import { RayonsService } from "@/services/rayons";
 
 type Repartition = {
   palettes: number;
@@ -24,11 +26,21 @@ type Repartition = {
 };
 
 type Ligne = {
+  id: string;
   referenceLM: string;
   designation: string;
   quantite: number;
   repartitions?: Repartition[];
   ean?: string | null;
+};
+
+type LigneArrivageEnregistree = {
+  reference_lm: string;
+  designation: string;
+  quantite: number;
+  nombre_palettes: number | null;
+  destination: string | null;
+  ean: string | null;
 };
 
 type RayonProfil = {
@@ -42,12 +54,18 @@ type CommandeBacko = {
   fournisseur: string;
   dateLivraison: string;
   lignes: Ligne[];
+  rayonId?: string | number;
+  rayonCode?: string;
 };
 
 type Props = {
   mode?: "create" | "edit";
   arrivageId?: string;
 };
+
+function creerIdentifiantLigne(referenceLM: string) {
+  return `${referenceLM}-${crypto.randomUUID()}`;
+}
 
 export default function PreparationArrivagePage({
   mode = "create",
@@ -64,6 +82,23 @@ export default function PreparationArrivagePage({
   const [chargementRayon, setChargementRayon] = useState(mode === "create");
   const [erreurRayon, setErreurRayon] = useState<string | null>(null);
 
+  function supprimerLigne(id: string) {
+    if (!commande) return;
+
+    const ligne = commande.lignes.find((item) => item.id === id);
+    if (!ligne) return;
+
+    if (!window.confirm(`Supprimer la référence ${ligne.referenceLM} – ${ligne.designation} de cet arrivage ?`)) {
+      return;
+    }
+
+    setCommande((precedente) =>
+      precedente
+        ? { ...precedente, lignes: precedente.lignes.filter((item) => item.id !== id) }
+        : precedente
+    );
+  }
+
   useEffect(() => {
   async function initialiser() {
     if (mode === "create") {
@@ -74,7 +109,17 @@ export default function PreparationArrivagePage({
         return;
       }
 
-      setCommande(JSON.parse(json));
+      const commandeImportee = JSON.parse(json) as Omit<CommandeBacko, "lignes"> & {
+        lignes: Omit<Ligne, "id">[];
+      };
+
+      setCommande({
+        ...commandeImportee,
+        lignes: commandeImportee.lignes.map((ligne) => ({
+          ...ligne,
+          id: creerIdentifiantLigne(ligne.referenceLM),
+        })),
+      });
     } else {
       if (!arrivageId) return;
 
@@ -83,7 +128,7 @@ const lignes = await getLignesArrivage(arrivageId);
 
 const lignesRegroupees = new Map<string, Ligne>();
 
-lignes.forEach((l: any) => {
+lignes.forEach((l: LigneArrivageEnregistree) => {
   const ligneExistante = lignesRegroupees.get(l.reference_lm);
   const repartition = {
     palettes: l.nombre_palettes ?? 1,
@@ -96,6 +141,7 @@ lignes.forEach((l: any) => {
   }
 
   lignesRegroupees.set(l.reference_lm, {
+    id: l.reference_lm,
     referenceLM: l.reference_lm,
     designation: l.designation,
     quantite: l.quantite,
@@ -122,10 +168,31 @@ setCommande({
         if (rayons.length === 1) {
           setRayonId(String(rayons[0].id));
         } else if (rayons.length === 0) {
-          console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible");
-          setErreurRayon(
-            "Impossible de créer l'arrivage : aucun rayon n'est associé à votre profil."
-          );
+          let rayonResolu = false;
+          const commandeImportee = JSON.parse(
+            localStorage.getItem("commandeBacko") ?? "{}"
+          ) as CommandeBacko;
+          const rayonTransmis = commandeImportee.rayonId ?? commandeImportee.rayonCode;
+
+          if (rayonTransmis) {
+            const { data: rayonsDisponibles, error } = await RayonsService.getAll();
+            const rayon = rayonsDisponibles?.find(
+              (item) => String(item.id) === String(rayonTransmis) || item.code === rayonTransmis
+            ) as RayonProfil | undefined;
+
+            if (!error && rayon) {
+              setRayonsDuProfil([rayon]);
+              setRayonId(String(rayon.id));
+              rayonResolu = true;
+            }
+          }
+
+          if (!rayonResolu) {
+            console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible");
+            setErreurRayon(
+              "Impossible de créer l'arrivage : aucun rayon n'est associé à votre profil."
+            );
+          }
         }
       } catch (error) {
         console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible", error);
@@ -147,6 +214,11 @@ setCommande({
 
   async function enregistrer(statutApresEnregistrement?: StatutArrivage) {
     if (!commande) return;
+
+    if (commande.lignes.length === 0) {
+      toast.error("Ajoutez au moins une référence avant d'enregistrer l'arrivage.");
+      return;
+    }
 
     if (mode === "create" && !rayonId) {
       const message =
@@ -211,14 +283,12 @@ setCommande({
 
   router.push("/dashboard/arrivages");
 
-} catch (error: any) {
+} catch (error: unknown) {
+  const erreur = error instanceof Error ? error : new Error("Erreur lors de l'enregistrement");
   console.error("Erreur complète :", error);
-  console.error("Message :", error?.message);
-  console.error("Details :", error?.details);
-  console.error("Hint :", error?.hint);
-  console.error("Code :", error?.code);
+  console.error("Message :", erreur.message);
 
-  toast.error(error?.message ?? "Erreur lors de l'enregistrement");
+  toast.error(erreur.message);
 }
 
 }
@@ -227,7 +297,7 @@ if (!commande) {
   return (
     <main className="min-h-screen bg-slate-100 flex items-center justify-center">
       <p className="text-xl text-slate-500">
-        Chargement de l'arrivage...
+        Chargement de l&apos;arrivage...
       </p>
     </main>
   );
@@ -239,7 +309,7 @@ if (!commande) {
 
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[#78BE20]">
-            Préparation de l'arrivage
+            Préparation de l&apos;arrivage
           </h1>
 
           <p>Commande {commande.commande}</p>
@@ -256,9 +326,12 @@ if (!commande) {
               ) : erreurRayon ? (
                 <p className="text-red-600">{erreurRayon}</p>
               ) : rayonsDuProfil.length === 1 ? (
-                <p className="font-semibold">
-                  Rayon associé : {rayonsDuProfil[0].code} - {rayonsDuProfil[0].nom}
-                </p>
+                <div>
+                  <p className="mb-2 font-semibold">Rayon de l&apos;arrivage</p>
+                  <p className="rounded-xl border border-slate-200 bg-slate-50 p-3 font-semibold text-slate-800">
+                    {rayonsDuProfil[0].code} - {rayonsDuProfil[0].nom}
+                  </p>
+                </div>
               ) : (
                 <>
                   <label className="mb-2 block font-semibold" htmlFor="rayon-arrivage">
@@ -312,7 +385,7 @@ if (!commande) {
 
           {!globalCommande && (
             <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 mt-4">
-              Le mode "Répartition de la commande" sera développé dans la prochaine étape.
+              Le mode &quot;Répartition de la commande&quot; sera développé dans la prochaine étape.
             </div>
           )}
 
@@ -320,50 +393,63 @@ if (!commande) {
 
         <div className="space-y-6">
 
-          {commande.lignes.map((ligne, index) => (
-  <PreparationLine
-    key={`${arrivageId ?? commande.commande}-${index}`}
-    reference={ligne.referenceLM}
-    designation={ligne.designation}
-    quantite={ligne.quantite}
-    modeGlobal={globalCommande}
-    destinationGlobale={destinationGlobale}
-    repartitionsInitiales={ligne.repartitions}
-    onChange={({ repartitions }) => {
-      setCommande((prev) => {
-        if (!prev) return prev;
+          {commande.lignes.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
+              Aucune référence dans cet arrivage. Vous pouvez revenir en arrière pour refaire l&apos;import.
+            </div>
+          ) : (
+            commande.lignes.map((ligne) => (
+              <div key={ligne.id} className="relative">
+                <button
+                  type="button"
+                  onClick={() => supprimerLigne(ligne.id)}
+                  className="absolute right-3 top-3 z-10 inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  aria-label={`Supprimer la référence ${ligne.referenceLM}`}
+                >
+                  <Trash2 size={18} aria-hidden="true" />
+                  Supprimer
+                </button>
+                <PreparationLine
+                  reference={ligne.referenceLM}
+                  designation={ligne.designation}
+                  quantite={ligne.quantite}
+                  modeGlobal={globalCommande}
+                  destinationGlobale={destinationGlobale}
+                  repartitionsInitiales={ligne.repartitions}
+                  onChange={({ repartitions }) => {
+                    setCommande((prev) => {
+                      if (!prev) return prev;
 
-        const lignes = [...prev.lignes];
-
-        lignes[index] = {
-          ...lignes[index],
-          repartitions,
-        };
-
-        return {
-          ...prev,
-          lignes,
-        };
-      });
-    }}
-  />
-))}
+                      return {
+                        ...prev,
+                        lignes: prev.lignes.map((item) =>
+                          item.id === ligne.id ? { ...item, repartitions } : item
+                        ),
+                      };
+                    });
+                  }}
+                />
+              </div>
+            ))
+          )}
 
         </div>
 
         <div className="mt-10 flex justify-end">
           <button
             onClick={() => enregistrer("PRET_A_RECEVOIR")}
-            className="mr-4 rounded-xl bg-blue-600 px-8 py-4 text-white font-bold"
+            disabled={commande.lignes.length === 0 || (mode === "create" && (chargementRayon || !!erreurRayon || !rayonId))}
+            className="mr-4 rounded-xl bg-blue-600 px-8 py-4 text-white font-bold disabled:cursor-not-allowed disabled:opacity-50"
           >
             Valider la préparation
           </button>
 
           <button
             onClick={() => enregistrer()}
-            className="rounded-xl bg-[#78BE20] px-8 py-4 text-white font-bold"
+            disabled={commande.lignes.length === 0 || (mode === "create" && (chargementRayon || !!erreurRayon || !rayonId))}
+            className="rounded-xl bg-[#78BE20] px-8 py-4 text-white font-bold disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Enregistrer l'arrivage
+            Enregistrer l&apos;arrivage
           </button>
         </div>
 
