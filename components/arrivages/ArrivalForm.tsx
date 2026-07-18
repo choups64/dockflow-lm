@@ -13,11 +13,22 @@ import { ArrivagesService } from "@/services/arrivages";
 
 import DestinationList from "./DestinationList";
 
+type Rayon = {
+  id: number;
+  code: string;
+  nom: string;
+};
+
+type Destination = {
+  id: number;
+  code: string;
+};
+
 export default function ArrivalForm() {
   const router = useRouter();
 
-  const [rayons, setRayons] = useState<any[]>([]);
-  const [destinations, setDestinations] = useState<any[]>([]);
+  const [rayons, setRayons] = useState<Rayon[]>([]);
+  const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(false);
 
   const {
@@ -34,7 +45,8 @@ export default function ArrivalForm() {
       rayon_id: 1,
       destinations: [
         {
-          destination_id: 1,
+          reference_lm: "",
+          destination_id: 0,
           nb_palettes: 1,
         },
       ],
@@ -110,7 +122,7 @@ export default function ArrivalForm() {
 
           <div>
             <label className="font-semibold">
-              Date de mise en magasin
+              Date de réception prévisionnelle
             </label>
 
             <input
@@ -161,6 +173,7 @@ export default function ArrivalForm() {
       <DestinationList
         control={control}
         register={register}
+        errors={errors}
         destinations={destinations}
       />
 

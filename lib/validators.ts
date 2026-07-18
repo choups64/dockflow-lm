@@ -17,8 +17,12 @@ export const arrivageSchema = z.object({
 
   destinations: z.array(
     z.object({
-      destination_id: z.number(),
-      nb_palettes: z.number().min(1),
+      reference_lm: z
+        .string()
+        .trim()
+        .regex(/^\d{8}$/, "La référence LM doit contenir exactement 8 chiffres."),
+      destination_id: z.number().min(1, "Veuillez sélectionner une destination."),
+      nb_palettes: z.number().min(1, "Le nombre de palettes doit être supérieur à zéro."),
     })
   ),
 });
