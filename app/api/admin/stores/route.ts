@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!payload.id) throw new Error("Magasin requis.");
-    const { data: store, error: storeError } = await admin.from("magasins").select("id, actif").eq("id", payload.id).single();
+    const { data: store, error: storeError } = await admin.from("magasins").select("id, code, actif").eq("id", payload.id).single();
     if (storeError || !store) throw storeError ?? new Error("Magasin introuvable.");
 
     if (payload.action === "toggle") {
@@ -114,6 +114,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, message: payload.actif ? "Magasin réactivé." : "Magasin désactivé." });
     }
 
+    if (store.code === "LM_LOCAL") throw new Error("Le magasin pilote LM_LOCAL ne peut pas être supprimé.");
     if (payload.id === profile.magasin_id) throw new Error("Vous ne pouvez pas supprimer votre magasin principal.");
     const [profiles, rayons, destinations, arrivages] = await Promise.all([
       admin.from("profiles").select("id", { count: "exact", head: true }).eq("magasin_id", payload.id),
