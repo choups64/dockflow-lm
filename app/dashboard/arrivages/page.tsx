@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getStatutArrivage } from "@/lib/arrivages";
 import RRPageHeader from "@/components/dashboard/RRPageHeader";
@@ -42,17 +43,24 @@ export default function ArrivagesPage() {
   async function supprimer(id: string) {
     if (!confirm("Supprimer cet arrivage ?")) return;
 
-    const { error } = await supabase
-      .from("arrivages")
-      .delete()
-      .eq("id", id);
+    console.info("[ARRIVAGE SUPPRESSION] ID ciblé :", id);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const response = await fetch(`/api/rr/arrivages/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${sessionData.session?.access_token ?? ""}` },
+      });
+      const result = await response.json() as { error?: string; code?: string; deletedCount?: number; destinationsDeleted?: number; lignesDeleted?: number };
+      console.info("[ARRIVAGE SUPPRESSION] Résultat :", result);
+      if (!response.ok) throw new Error(result.error ?? "Erreur de suppression inconnue.");
 
-    if (error) {
-      alert("Impossible de supprimer.");
-      return;
+      setArrivages((current) => current.filter((arrivage) => arrivage.id !== id));
+      toast.success("Arrivage supprimé avec succès.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erreur de suppression inconnue.";
+      console.error("[ARRIVAGE SUPPRESSION] Erreur :", error);
+      toast.error(`Impossible de supprimer cet arrivage : ${message}`);
     }
-
-    chargerArrivages();
   }
 
   if (loading) {
