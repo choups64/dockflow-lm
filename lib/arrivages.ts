@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { ProfileService } from "@/services/profile";
 
 export const STATUTS_ARRIVAGE = {
   EN_PREPARATION: {
@@ -56,6 +57,11 @@ export async function creerArrivagePreparation(data: ArrivagePreparation) {
   console.log("[ARRIVAGE] Rayon reçu :", data.rayonId);
 
   const rayonId = Number(data.rayonId);
+  const profil = await ProfileService.getCurrentProfile();
+
+  if (!profil.magasinId) {
+    throw new Error("Impossible de créer l'arrivage : aucun magasin n'est associé à votre profil.");
+  }
 
   if (!Number.isInteger(rayonId) || rayonId <= 0) {
     console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible");
@@ -68,6 +74,7 @@ export async function creerArrivagePreparation(data: ArrivagePreparation) {
     .from("rayons")
     .select("id, code, nom")
     .eq("id", rayonId)
+    .eq("magasin_id", profil.magasinId)
     .maybeSingle();
 
   if (rayonError || !rayon) {
@@ -84,6 +91,7 @@ export async function creerArrivagePreparation(data: ArrivagePreparation) {
     date_arrivee: data.dateLivraison,
     statut: "EN_PREPARATION",
     rayon_id: rayon.id,
+    magasin_id: profil.magasinId,
   }).select().single();
 
   if (error) throw error;

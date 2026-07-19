@@ -6,11 +6,14 @@ export type Destination = {
   nom: string;
 };
 
-export async function getDestinations() {
-  const { data, error } = await supabase
+export async function getDestinations(magasinId?: string) {
+  let query = supabase
     .from("destinations")
     .select("*")
     .order("id");
+
+  if (magasinId) query = query.eq("magasin_id", magasinId);
+  const { data, error } = await query;
 
   if (error) throw error;
 

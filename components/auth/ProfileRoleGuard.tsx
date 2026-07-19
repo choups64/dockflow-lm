@@ -18,7 +18,7 @@ export default function ProfileRoleGuard({ roles }: ProfileRoleGuardProps) {
       try {
         const profil = await ProfileService.getCurrentProfile();
         if (actif && !roles.includes(profil.role)) {
-          router.replace("/");
+          router.replace(profil.role === "RR" ? "/dashboard" : profil.role === "CARISTE" ? "/cariste" : "/");
         }
       } catch {
         if (actif) router.replace("/");

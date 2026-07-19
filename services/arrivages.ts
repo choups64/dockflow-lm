@@ -1,9 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import { ArrivageForm } from "@/lib/validators";
+import { ProfileService } from "@/services/profile";
 
 export class ArrivagesService {
 
   static async create(data: ArrivageForm) {
+    const profil = await ProfileService.getCurrentProfile();
+    if (!profil.magasinId) throw new Error("Aucun magasin n'est associé à votre profil.");
+
     const { data: arrivage, error } = await supabase
       .from("arrivages")
       .insert({
@@ -12,6 +16,7 @@ export class ArrivagesService {
         date_mise_en_magasin: data.date_mise_en_magasin,
         commentaire: data.commentaire,
         statut: "EN_PREPARATION",
+        magasin_id: profil.magasinId,
       })
       .select()
       .single();
