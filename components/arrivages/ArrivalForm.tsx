@@ -118,7 +118,7 @@ export default function ArrivalForm() {
             <input
               {...register("numero_commande")}
               className="mt-2 min-h-12 w-full rounded-xl border border-[#E3E8EC] px-4 py-3 text-[#101820] outline-none transition placeholder:text-[#66727A] focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15"
-              placeholder="458963"
+              placeholder="72539619"
             />
 
             {errors.numero_commande && (
