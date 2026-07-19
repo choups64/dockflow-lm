@@ -25,6 +25,9 @@ interface Props {
   reference: string;
   designation: string;
   quantite: number;
+  destinations?: DestinationDb[];
+  editable?: boolean;
+  onDetailsChange?: (data: { reference: string; designation: string; quantite: number }) => void;
 
   destinationGlobale?: string;
   modeGlobal?: boolean;
@@ -40,6 +43,9 @@ export default function PreparationLine({
   reference,
   designation,
   quantite,
+  destinations,
+  editable = false,
+  onDetailsChange,
   destinationGlobale = "",
   modeGlobal = false,
   repartitionsInitiales = repartitionParDefaut,
@@ -54,8 +60,12 @@ export default function PreparationLine({
 
   // Les deux effets suivants synchronisent les valeurs initiales et la destination globale reçues du parent.
   useEffect(() => {
+    if (destinations) return;
+
     getDestinations().then(setListeDestinations).catch(console.error);
-  }, []);
+  }, [destinations]);
+
+  const destinationsDisponibles = destinations ?? listeDestinations;
 
   useEffect(() => {
     if (!modeGlobal || !destinationGlobale) return;
@@ -126,9 +136,25 @@ export default function PreparationLine({
 
   return (
     <article className="rounded-3xl border border-[#E3E8EC] bg-white p-5 shadow-sm sm:p-6">
-      <h3 className="text-xl font-black text-[#101820]">{reference}</h3>
-      <p className="mt-1 text-[#66727A]">{designation}</p>
-      <p className="mt-2 text-sm">Quantité BACKO : <strong>{quantite}</strong></p>
+      {editable ? (
+        <div className="grid gap-3 sm:grid-cols-[11rem_1fr_9rem]">
+          <label className="text-sm font-semibold text-[#101820]">Référence LM
+            <input value={reference} onChange={(event) => onDetailsChange?.({ reference: event.target.value, designation, quantite })} className="mt-1 min-h-11 w-full rounded-xl border border-[#E3E8EC] bg-white px-3 py-2 outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15" placeholder="87007999" />
+          </label>
+          <label className="text-sm font-semibold text-[#101820]">Désignation
+            <input value={designation} onChange={(event) => onDetailsChange?.({ reference, designation: event.target.value, quantite })} className="mt-1 min-h-11 w-full rounded-xl border border-[#E3E8EC] bg-white px-3 py-2 outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15" placeholder="Désignation produit" />
+          </label>
+          <label className="text-sm font-semibold text-[#101820]">Quantité (optionnelle)
+            <input type="number" min="0" value={quantite || ""} onChange={(event) => onDetailsChange?.({ reference, designation, quantite: Number(event.target.value) || 0 })} className="mt-1 min-h-11 w-full rounded-xl border border-[#E3E8EC] bg-white px-3 py-2 outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15" placeholder="0" />
+          </label>
+        </div>
+      ) : (
+        <>
+          <h3 className="text-xl font-black text-[#101820]">{reference}</h3>
+          <p className="mt-1 text-[#66727A]">{designation}</p>
+          <p className="mt-2 text-sm">Quantité BACKO : <strong>{quantite}</strong></p>
+        </>
+      )}
 
       <div className="mt-4 space-y-3">
         {repartitions.map((r,i)=>(
@@ -147,7 +173,7 @@ export default function PreparationLine({
               className="min-h-11 flex-1 rounded-xl border border-[#E3E8EC] bg-white px-3 py-2 outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15"
             >
               <option value="">Choisir...</option>
-              {listeDestinations.map((d)=>(
+              {destinationsDisponibles.map((d)=>(
                 <option key={d.id} value={d.code}>{d.nom}</option>
               ))}
             </select>

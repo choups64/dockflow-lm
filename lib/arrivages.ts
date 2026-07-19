@@ -47,6 +47,7 @@ export type ArrivagePreparation = {
   fournisseur: string;
   dateLivraison: string | null;
   rayonId: string;
+  commentaire?: string | null;
   lignes: LignePreparation[];
 };
 
@@ -79,6 +80,7 @@ export async function creerArrivagePreparation(data: ArrivagePreparation) {
     commande: data.commande,
     fournisseur: data.fournisseur,
     date_arrivee: data.dateLivraison,
+    commentaire: data.commentaire ?? null,
     statut: "EN_PREPARATION",
     rayon_id: rayon.id,
     magasin_id: profil.magasinId,

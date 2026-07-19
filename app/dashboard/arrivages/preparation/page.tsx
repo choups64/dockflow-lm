@@ -190,7 +190,8 @@ setCommande({
       }
     }
 
-    getDestinations()
+    const profilDestinations = await ProfileService.getCurrentProfile();
+    getDestinations(profilDestinations.magasinId ?? undefined)
       .then(setDestinations)
       .catch(console.error);
   }
@@ -402,6 +403,7 @@ if (!commande) {
                   quantite={ligne.quantite}
                   modeGlobal={globalCommande}
                   destinationGlobale={destinationGlobale}
+                  destinations={destinations}
                   repartitionsInitiales={ligne.repartitions}
                   onChange={({ repartitions }) => {
                     setCommande((prev) => {
