@@ -19,7 +19,6 @@ import {
   updateStatutArrivage,
 } from "@/lib/arrivages";
 import { ProfileService } from "@/services/profile";
-import { RayonsService } from "@/services/rayons";
 import RRPageLayout from "@/components/dashboard/RRPageLayout";
 
 type Repartition = {
@@ -162,39 +161,15 @@ setCommande({
 
     if (mode === "create") {
       try {
-        const profil = await ProfileService.getCurrentProfile();
-        const rayons = profil.rayons as RayonProfil[];
+        const rayons = await ProfileService.getCurrentUserRayons() as RayonProfil[];
 
         setRayonsDuProfil(rayons);
 
         if (rayons.length === 1) {
           setRayonId(String(rayons[0].id));
         } else if (rayons.length === 0) {
-          let rayonResolu = false;
-          const commandeImportee = JSON.parse(
-            localStorage.getItem("commandeBacko") ?? "{}"
-          ) as CommandeBacko;
-          const rayonTransmis = commandeImportee.rayonId ?? commandeImportee.rayonCode;
-
-          if (rayonTransmis) {
-            const { data: rayonsDisponibles, error } = await RayonsService.getAll();
-            const rayon = rayonsDisponibles?.find(
-              (item) => String(item.id) === String(rayonTransmis) || item.code === rayonTransmis
-            ) as RayonProfil | undefined;
-
-            if (!error && rayon) {
-              setRayonsDuProfil([rayon]);
-              setRayonId(String(rayon.id));
-              rayonResolu = true;
-            }
-          }
-
-          if (!rayonResolu) {
-            console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible");
-            setErreurRayon(
-              "Impossible de créer l'arrivage : aucun rayon n'est associé à votre profil."
-            );
-          }
+          console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible");
+          setErreurRayon("Aucun rayon n’est associé à votre profil. Contactez un administrateur.");
         }
       } catch (error) {
         console.error("[ARRIVAGE] Création bloquée : aucun rayon disponible", error);

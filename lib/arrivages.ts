@@ -70,17 +70,7 @@ export async function creerArrivagePreparation(data: ArrivagePreparation) {
     );
   }
 
-  const { data: rayon, error: rayonError } = await supabase
-    .from("rayons")
-    .select("id, code, nom")
-    .eq("id", rayonId)
-    .eq("magasin_id", profil.magasinId)
-    .maybeSingle();
-
-  if (rayonError || !rayon) {
-    console.error("[ARRIVAGE] Création bloquée : rayon invalide", rayonError);
-    throw rayonError ?? new Error("Rayon introuvable");
-  }
+  const rayon = await ProfileService.assertCurrentUserCanUseRayon(rayonId);
 
   console.log(`[ARRIVAGE] Rayon validé : ${rayon.code} - ${rayon.nom}`);
   console.log("[ARRIVAGE] Création avec rayon_id :", rayon.id);

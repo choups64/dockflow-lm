@@ -7,9 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import { arrivageSchema, ArrivageForm } from "@/lib/validators";
-import { RayonsService } from "@/services/rayons";
 import { DestinationsService } from "@/services/destinations";
 import { ArrivagesService } from "@/services/arrivages";
+import { ProfileService } from "@/services/profile";
 
 import DestinationList from "./DestinationList";
 
@@ -30,11 +30,14 @@ export default function ArrivalForm() {
   const [rayons, setRayons] = useState<Rayon[]>([]);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(false);
+  const [erreurRayons, setErreurRayons] = useState<string | null>(null);
+  const [chargementRayons, setChargementRayons] = useState(true);
 
   const {
     control,
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<ArrivageForm>({
     resolver: zodResolver(arrivageSchema),
@@ -42,7 +45,7 @@ export default function ArrivalForm() {
       numero_commande: "",
       date_mise_en_magasin: "",
       commentaire: "",
-      rayon_id: 1,
+      rayon_id: 0,
       destinations: [
         {
           reference_lm: "",
@@ -55,21 +58,24 @@ export default function ArrivalForm() {
 
   useEffect(() => {
     async function chargerDonnees() {
-      const { data: rayonsData } = await RayonsService.getAll();
-      const { data: destinationsData } =
-        await DestinationsService.getAll();
-
-      if (rayonsData) {
+      try {
+        const [rayonsData, destinationsResult] = await Promise.all([
+          ProfileService.getCurrentUserRayons(),
+          DestinationsService.getAll(),
+        ]);
         setRayons(rayonsData);
-      }
-
-      if (destinationsData) {
-        setDestinations(destinationsData);
+        if (rayonsData.length === 1) setValue("rayon_id", rayonsData[0].id);
+        if (rayonsData.length === 0) setErreurRayons("Aucun rayon n’est associé à votre profil. Contactez un administrateur.");
+        if (destinationsResult.data) setDestinations(destinationsResult.data);
+      } catch (error) {
+        setErreurRayons(error instanceof Error ? error.message : "Aucun rayon n’est associé à votre profil. Contactez un administrateur.");
+      } finally {
+        setChargementRayons(false);
       }
     }
 
     chargerDonnees();
-  }, []);
+  }, [setValue]);
 
   async function onSubmit(data: ArrivageForm) {
     try {
@@ -94,6 +100,8 @@ export default function ArrivalForm() {
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-8"
     >
+      {erreurRayons && <p className="rounded-xl bg-red-50 p-4 text-red-700">{erreurRayons}</p>}
+      <fieldset disabled={chargementRayons || Boolean(erreurRayons)} className="space-y-8 disabled:opacity-60">
       <section className="rounded-3xl border border-[#E3E8EC] bg-white p-5 shadow-sm sm:p-8">
 
         <h2 className="text-2xl font-black text-[#101820] mb-6">
@@ -141,8 +149,10 @@ export default function ArrivalForm() {
               {...register("rayon_id", {
                 valueAsNumber: true,
               })}
+              disabled={chargementRayons || rayons.length <= 1}
               className="mt-2 min-h-12 w-full rounded-xl border border-[#E3E8EC] px-4 py-3 text-[#101820] outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15"
             >
+              {rayons.length !== 1 && <option value="">Choisir un rayon...</option>}
               {rayons.map((rayon) => (
                 <option
                   key={rayon.id}
@@ -176,10 +186,11 @@ export default function ArrivalForm() {
         errors={errors}
         destinations={destinations}
       />
+      </fieldset>
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || chargementRayons || Boolean(erreurRayons) || rayons.length === 0}
         className="min-h-12 w-full rounded-xl bg-[#78BE20] px-6 py-3 font-bold text-white transition hover:bg-[#4F8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/30 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
       >
         {loading

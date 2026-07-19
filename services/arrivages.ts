@@ -7,6 +7,7 @@ export class ArrivagesService {
   static async create(data: ArrivageForm) {
     const profil = await ProfileService.getCurrentProfile();
     if (!profil.magasinId) throw new Error("Aucun magasin n'est associé à votre profil.");
+    await ProfileService.assertCurrentUserCanUseRayon(data.rayon_id);
 
     const { data: arrivage, error } = await supabase
       .from("arrivages")

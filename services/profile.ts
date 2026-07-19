@@ -13,6 +13,8 @@ export interface CurrentProfile {
     id: number;
     code: string;
     nom: string;
+    magasin_id: string;
+    actif: boolean;
   }[];
 }
 
@@ -57,7 +59,9 @@ export class ProfileService {
         rayon:rayons (
           id,
           code,
-          nom
+          nom,
+          magasin_id,
+          actif
         )
       `)
       .eq("profile_id", user.id);
@@ -80,5 +84,20 @@ export class ProfileService {
         return rayon ? [rayon] : [];
       }),
     };
+  }
+
+  static async getCurrentUserRayons() {
+    const profil = await this.getCurrentProfile();
+    if (profil.role !== "RR") throw new Error("Cette page est réservée aux responsables de rayon.");
+
+    return profil.rayons
+      .filter((rayon) => rayon.actif && rayon.magasin_id === profil.magasinId)
+      .sort((a, b) => a.code.localeCompare(b.code));
+  }
+
+  static async assertCurrentUserCanUseRayon(rayonId: number) {
+    const rayon = (await this.getCurrentUserRayons()).find((item) => item.id === rayonId);
+    if (!rayon) throw new Error("Vous n’êtes pas autorisé à créer un arrivage pour ce rayon.");
+    return rayon;
   }
 }
