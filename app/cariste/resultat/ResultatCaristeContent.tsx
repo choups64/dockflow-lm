@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import MobileDebug from "@/components/cariste/MobileDebug";
 import { supabase } from "@/lib/supabase";
 import {
@@ -32,7 +33,6 @@ export default function ResultatCaristePage() {
   const [arrivageAReceptionner, setArrivageAReceptionner] = useState<ResultatRecherche["arrivage"] | null>(null);
   const [receptionEnCours, setReceptionEnCours] = useState(false);
   const [erreurReception, setErreurReception] = useState<string | null>(null);
-  const [arrivagesReceptionnes, setArrivagesReceptionnes] = useState<Set<string>>(() => new Set());
 
   const type = estTypeRechercheCariste(typeParametre) ? typeParametre : null;
   const valeur = type ? normaliserValeurRecherche(type, valeurParametre) : null;
@@ -71,14 +71,17 @@ export default function ResultatCaristePage() {
     setReceptionEnCours(true);
     setErreurReception(null);
 
-    const { error } = await supabase
-      .from("arrivages")
-      .update({ statut: "RECEPTIONNEE" })
-      .eq("id", arrivageAReceptionner.id);
+    const { data: sessionData } = await supabase.auth.getSession();
+    const response = await fetch(`/api/cariste/arrivages/${arrivageAReceptionner.id}/reception`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${sessionData.session?.access_token ?? ""}` },
+    });
+    const result = await response.json() as { error?: string };
 
-    if (error) {
-      console.error(error);
-      setErreurReception("Une erreur est survenue pendant la réception.");
+    if (!response.ok) {
+      const message = result.error ?? "Une erreur est survenue pendant la réception.";
+      setErreurReception(message);
+      toast.error(`Impossible de réceptionner cette commande : ${message}`);
       setReceptionEnCours(false);
       return;
     }
@@ -90,9 +93,9 @@ export default function ResultatCaristePage() {
           : resultat
       )
     );
-    setArrivagesReceptionnes((precedents) => new Set(precedents).add(arrivageAReceptionner.id));
     setArrivageAReceptionner(null);
     setReceptionEnCours(false);
+    toast.success("Commande réceptionnée avec succès.");
   }
 
   return (
@@ -160,42 +163,28 @@ export default function ResultatCaristePage() {
                         </div>
                       </div>
                     ))}
+                    {arrivage.statut === "PRET_A_RECEVOIR" ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setErreurReception(null);
+                          setArrivageAReceptionner(arrivage);
+                        }}
+                        className="mt-4 flex min-h-14 w-full items-center justify-center rounded-2xl bg-[#78BE20] px-5 text-lg font-black text-white shadow-lg shadow-[#4D8F12]/20 transition hover:bg-[#4D8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50"
+                      >
+                        📦 Réceptionner la commande
+                      </button>
+                    ) : arrivage.statut === "RECEPTIONNEE" ? (
+                      <p className="mt-4 flex min-h-14 w-full items-center justify-center rounded-2xl bg-emerald-600 px-5 text-lg font-black text-white opacity-80">✅ Commande réceptionnée</p>
+                    ) : (
+                      <p className="mt-4 rounded-2xl border border-white/[0.08] bg-[#11181C] px-5 py-4 text-center text-sm font-bold text-[#AAB2B7]">Commande en préparation</p>
+                    )}
                   </div>
                 </article>
               );
             })}
           </div>
         )}
-
-        {resultats.map(({ arrivage }) => {
-          const receptionneeCetteSession = arrivagesReceptionnes.has(arrivage.id);
-          const dejaReceptionnee = arrivage.statut === "RECEPTIONNEE";
-
-          if (dejaReceptionnee && !receptionneeCetteSession) return null;
-
-          return receptionneeCetteSession ? (
-            <button
-              key={arrivage.id}
-              type="button"
-              disabled
-              className="mt-5 flex min-h-14 w-full items-center justify-center rounded-2xl bg-emerald-600 px-5 text-lg font-black text-white opacity-80 sm:mt-6"
-            >
-              ✅ Commande réceptionnée
-            </button>
-          ) : (
-            <button
-              key={arrivage.id}
-              type="button"
-              onClick={() => {
-                setErreurReception(null);
-                setArrivageAReceptionner(arrivage);
-              }}
-              className="mt-5 flex min-h-14 w-full items-center justify-center rounded-2xl bg-[#78BE20] px-5 text-lg font-black text-white shadow-lg shadow-[#4D8F12]/20 transition hover:bg-[#4D8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 sm:mt-6"
-            >
-              📦 Réceptionner la commande
-            </button>
-          );
-        })}
 
         <button onClick={() => router.push("/cariste")} className="mt-5 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-[#78BE20] bg-[#11181C] px-5 text-lg font-black text-[#9bd754] transition hover:bg-[#1A2226] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 sm:mt-6">
           <Search size={20} aria-hidden="true" /> Nouvelle recherche
