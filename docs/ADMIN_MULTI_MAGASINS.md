@@ -15,8 +15,11 @@ Les rayons et destinations sont uniques par couple `(magasin_id, code)`. Un R11 
 1. Exécuter `supabase/migrations/20260719133000_add_multi_store_admin.sql` dans Supabase.
 2. Dans **Authentication > Users**, créer manuellement le compte administrateur avec l’e-mail fourni par l’équipe, définir son mot de passe initial et cocher la confirmation d’e-mail.
 3. Exécuter `supabase/admin_profile_after_auth.sql` pour rattacher cet UUID Auth au magasin pilote, avec `role = ADMIN` et `admin_scope = NATIONAL`.
+4. Exécuter ensuite `supabase/migrations/20260719150000_harden_admin_resource_management.sql`.
 
 Ne jamais placer une `SUPABASE_SERVICE_ROLE_KEY` dans une variable `NEXT_PUBLIC_*` ni dans le navigateur. La création future d’utilisateurs devra passer par une route serveur authentifiée et vérifier le rôle ADMIN avant d’utiliser l’Admin API.
+
+Dans Vercel, ajouter `SUPABASE_SERVICE_ROLE_KEY` uniquement aux variables serveur (Production, Preview et Development si nécessaire). Elle ne doit jamais être préfixée par `NEXT_PUBLIC_`.
 
 ## Exploitation
 

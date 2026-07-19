@@ -8,6 +8,7 @@ export interface CurrentProfile {
   magasinId: string | null;
   magasin: { id: string; code: string; nom: string; ville: string | null; actif: boolean } | null;
   adminScope: "MAGASIN" | "NATIONAL" | null;
+  actif: boolean;
   rayons: {
     id: number;
     code: string;
@@ -37,6 +38,10 @@ export class ProfileService {
 
     if (error || !profile) {
       throw error ?? new Error("Profil introuvable");
+    }
+
+    if (profile.actif === false) {
+      throw new Error("Votre compte DockFlow est désactivé.");
     }
 
     const magasinId = typeof profile.magasin_id === "string" ? profile.magasin_id : null;
@@ -69,6 +74,7 @@ export class ProfileService {
       magasinId,
       magasin: magasin as CurrentProfile["magasin"],
       adminScope: profile.admin_scope === "MAGASIN" || profile.admin_scope === "NATIONAL" ? profile.admin_scope : null,
+      actif: profile.actif !== false,
       rayons: ((rayons ?? []) as unknown as ProfileRayonRow[]).flatMap(({ rayon }) => {
         if (Array.isArray(rayon)) return rayon;
         return rayon ? [rayon] : [];
