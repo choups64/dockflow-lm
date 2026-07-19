@@ -15,12 +15,6 @@ import {
   ResultatRecherche,
 } from "@/lib/caristeSearch";
 
-const libelles: Record<CaristeSearchType, string> = {
-  commande: "Résultat par commande",
-  reference: "Résultat par référence LM",
-  rayon: "Résultat par rayon",
-};
-
 function messageAucunResultat(type: CaristeSearchType) {
   if (type === "reference") return "Aucun arrivage actif ne contient cette référence LM.";
   if (type === "rayon") return "Aucun arrivage actif pour ce rayon.";
@@ -118,11 +112,6 @@ export default function ResultatCaristePage() {
           <ArrowLeft size={20} aria-hidden="true" /> Retour
         </button>
 
-        <section className="mb-5 rounded-2xl border border-white/[0.08] bg-[#11181C] p-4 shadow-xl shadow-black/20 sm:mb-6 sm:rounded-3xl sm:p-5">
-          <p className="text-sm font-black uppercase tracking-[0.16em] text-[#AAB2B7]">{type ? libelles[type] : "Résultat"}</p>
-          <h1 className="mt-2 break-words text-3xl font-black tracking-wide sm:text-[2.1rem]">{valeur ?? valeurParametre ?? "Paramètres invalides"}</h1>
-        </section>
-
         {rechercheInvalide ? (
           <div className="rounded-3xl border border-white/[0.08] bg-[#11181C] px-4 py-10 text-center text-[#AAB2B7]" role="alert">
             <p>Recherche invalide.</p>
@@ -143,13 +132,16 @@ export default function ResultatCaristePage() {
 
               return (
                 <article key={arrivage.id} className="w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1A2226] sm:rounded-3xl">
-                  <div className="border-b border-white/[0.08] p-4 sm:p-5">
-                    <p className="text-sm font-black uppercase tracking-[0.16em] text-[#AAB2B7]">Commande</p>
-                    <p className="mt-1 break-words text-3xl font-black tracking-wide sm:text-[2.1rem]">{arrivage.commande}</p>
-                    <p className="mt-4 text-[15px] text-[#AAB2B7]">Livraison : <span className="font-semibold text-white">{arrivage.date_arrivee ?? "-"}</span></p>
-                    {rayon && <p className="mt-2 text-[15px] text-[#AAB2B7]">Rayon : <span className="font-semibold text-white">{rayon}</span></p>}
-                    {arrivage.fournisseur && <p className="mt-2 break-words text-[15px] text-[#AAB2B7]">{arrivage.fournisseur}</p>}
-                    <span className="mt-5 inline-block rounded-full bg-[#78BE20]/15 px-3 py-1 text-xs font-black uppercase tracking-wide text-[#9bd754]">{arrivage.statut}</span>
+                  <div className="border-b border-white/[0.08] p-3 sm:p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="text-lg font-black tracking-wide sm:text-xl">Commande BACKO <span className="text-[#9bd754]">{arrivage.commande}</span></p>
+                      <span className="rounded-full bg-[#78BE20]/15 px-3 py-1 text-xs font-black uppercase tracking-wide text-[#9bd754]">{arrivage.statut}</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs font-medium text-[#AAB2B7] sm:text-sm">
+                      <span>Livraison : <span className="font-semibold text-white">{arrivage.date_arrivee ?? "-"}</span></span>
+                      {rayon && <span>Rayon : <span className="font-semibold text-white">{rayon}</span></span>}
+                      {arrivage.fournisseur && <span className="break-words">{arrivage.fournisseur}</span>}
+                    </div>
                   </div>
 
                   <div className="space-y-3 p-3 sm:p-4">
