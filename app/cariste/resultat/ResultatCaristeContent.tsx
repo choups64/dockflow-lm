@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowLeft, Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import MobileDebug from "@/components/cariste/MobileDebug";
+import { supabase } from "@/lib/supabase";
 import {
   CaristeSearchType,
   estTypeRechercheCariste,
@@ -34,6 +35,10 @@ export default function ResultatCaristePage() {
   const [resultats, setResultats] = useState<ResultatRecherche[]>([]);
   const [chargement, setChargement] = useState(true);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [arrivageAReceptionner, setArrivageAReceptionner] = useState<ResultatRecherche["arrivage"] | null>(null);
+  const [receptionEnCours, setReceptionEnCours] = useState(false);
+  const [erreurReception, setErreurReception] = useState<string | null>(null);
+  const [arrivagesReceptionnes, setArrivagesReceptionnes] = useState<Set<string>>(() => new Set());
 
   const type = estTypeRechercheCariste(typeParametre) ? typeParametre : null;
   const valeur = type ? normaliserValeurRecherche(type, valeurParametre) : null;
@@ -65,6 +70,36 @@ export default function ResultatCaristePage() {
       actif = false;
     };
   }, [type, valeur]);
+
+  async function confirmerReception() {
+    if (!arrivageAReceptionner) return;
+
+    setReceptionEnCours(true);
+    setErreurReception(null);
+
+    const { error } = await supabase
+      .from("arrivages")
+      .update({ statut: "RECEPTIONNEE" })
+      .eq("id", arrivageAReceptionner.id);
+
+    if (error) {
+      console.error(error);
+      setErreurReception("Une erreur est survenue pendant la réception.");
+      setReceptionEnCours(false);
+      return;
+    }
+
+    setResultats((precedents) =>
+      precedents.map((resultat) =>
+        resultat.arrivage.id === arrivageAReceptionner.id
+          ? { ...resultat, arrivage: { ...resultat.arrivage, statut: "RECEPTIONNEE" } }
+          : resultat
+      )
+    );
+    setArrivagesReceptionnes((precedents) => new Set(precedents).add(arrivageAReceptionner.id));
+    setArrivageAReceptionner(null);
+    setReceptionEnCours(false);
+  }
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#090D0F] pb-8 text-white sm:pb-10">
@@ -140,11 +175,69 @@ export default function ResultatCaristePage() {
           </div>
         )}
 
+        {resultats.map(({ arrivage }) => {
+          const receptionneeCetteSession = arrivagesReceptionnes.has(arrivage.id);
+          const dejaReceptionnee = arrivage.statut === "RECEPTIONNEE";
+
+          if (dejaReceptionnee && !receptionneeCetteSession) return null;
+
+          return receptionneeCetteSession ? (
+            <button
+              key={arrivage.id}
+              type="button"
+              disabled
+              className="mt-5 flex min-h-14 w-full items-center justify-center rounded-2xl bg-emerald-600 px-5 text-lg font-black text-white opacity-80 sm:mt-6"
+            >
+              ✅ Commande réceptionnée
+            </button>
+          ) : (
+            <button
+              key={arrivage.id}
+              type="button"
+              onClick={() => {
+                setErreurReception(null);
+                setArrivageAReceptionner(arrivage);
+              }}
+              className="mt-5 flex min-h-14 w-full items-center justify-center rounded-2xl bg-[#78BE20] px-5 text-lg font-black text-white shadow-lg shadow-[#4D8F12]/20 transition hover:bg-[#4D8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 sm:mt-6"
+            >
+              📦 Réceptionner la commande
+            </button>
+          );
+        })}
+
         <button onClick={() => router.push("/cariste")} className="mt-5 flex min-h-14 w-full items-center justify-center gap-2 rounded-2xl border border-[#78BE20] bg-[#11181C] px-5 text-lg font-black text-[#9bd754] transition hover:bg-[#1A2226] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 sm:mt-6">
           <Search size={20} aria-hidden="true" /> Nouvelle recherche
         </button>
       </div>
       <MobileDebug />
+
+      {arrivageAReceptionner && (
+        <div className="fixed inset-0 z-50 flex items-end bg-black/70 p-3 sm:items-center sm:justify-center">
+          <div className="w-full rounded-3xl border border-white/[0.12] bg-[#11181C] p-5 shadow-2xl sm:max-w-md">
+            <h2 className="text-xl font-black">Confirmer la réception complète de cette commande ?</h2>
+            <p className="mt-2 text-[#AAB2B7]">Commande {arrivageAReceptionner.commande}</p>
+            {erreurReception && <p className="mt-4 text-sm text-red-300" role="alert">{erreurReception}</p>}
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                disabled={receptionEnCours}
+                onClick={() => setArrivageAReceptionner(null)}
+                className="min-h-14 rounded-2xl border border-white/[0.12] bg-[#1A2226] px-4 text-base font-bold transition hover:bg-[#222C31] disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                disabled={receptionEnCours}
+                onClick={() => void confirmerReception()}
+                className="min-h-14 rounded-2xl bg-[#78BE20] px-4 text-base font-black text-white transition hover:bg-[#4D8F12] disabled:opacity-50"
+              >
+                {receptionEnCours ? "Réception…" : "Confirmer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
