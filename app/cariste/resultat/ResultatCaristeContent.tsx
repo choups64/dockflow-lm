@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { ArrowLeft, Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import MobileDebug from "@/components/cariste/MobileDebug";
 import {
   CaristeSearchType,
   estTypeRechercheCariste,
@@ -68,7 +69,7 @@ export default function ResultatCaristePage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#090D0F] pb-8 text-white sm:pb-10">
       <header className="border-b border-[#78BE20] bg-[#11181C] shadow-lg shadow-black/20">
-        <div className="mx-auto flex w-full max-w-lg items-center gap-4 px-3 py-4 sm:gap-5 sm:px-5 sm:py-5">
+        <div className="flex w-full items-center gap-4 px-3 py-4 sm:mx-auto sm:max-w-lg sm:gap-5 sm:px-5 sm:py-5">
           <Image src="/leroy-merlin-logo.svg" alt="Leroy Merlin" width={110} height={70} priority className="h-14 w-auto shrink-0 object-contain" />
           <div className="min-w-0">
             <p className="text-xl font-black tracking-[0.16em]">DOCK<span className="text-[#78BE20]">FLOW</span></p>
@@ -77,7 +78,7 @@ export default function ResultatCaristePage() {
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-lg px-3 py-4 sm:px-5 sm:py-6">
+      <div className="w-full px-3 py-4 sm:mx-auto sm:max-w-lg sm:px-5 sm:py-6">
         <button onClick={() => router.push("/cariste")} className="mb-5 inline-flex min-h-14 items-center gap-2 rounded-2xl border border-white/[0.12] bg-[#11181C] px-5 text-base font-bold transition hover:bg-[#1A2226] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 sm:mb-6">
           <ArrowLeft size={20} aria-hidden="true" /> Retour
         </button>
@@ -143,6 +144,7 @@ export default function ResultatCaristePage() {
           <Search size={20} aria-hidden="true" /> Nouvelle recherche
         </button>
       </div>
+      <MobileDebug />
     </main>
   );
 }

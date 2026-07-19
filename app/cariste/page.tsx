@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Building2, PackageSearch, Search } from "lucide-react";
 import { RayonsService } from "@/services/rayons";
+import MobileDebug from "@/components/cariste/MobileDebug";
 import {
   CaristeSearchType,
   normaliserValeurRecherche,
@@ -70,7 +71,7 @@ export default function CaristePage() {
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#090D0F] pb-8 text-white sm:pb-10">
       <header className="border-b border-[#78BE20] bg-[#11181C] shadow-lg shadow-black/20">
-        <div className="mx-auto flex w-full max-w-lg items-center gap-4 px-3 py-4 sm:gap-5 sm:px-5 sm:py-5">
+        <div className="flex w-full items-center gap-4 px-3 py-4 sm:mx-auto sm:max-w-lg sm:gap-5 sm:px-5 sm:py-5">
           <Image
             src="/leroy-merlin-logo.svg"
             alt="Leroy Merlin"
@@ -86,7 +87,7 @@ export default function CaristePage() {
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-lg px-3 py-4 sm:px-5 sm:py-6">
+      <div className="w-full px-3 py-4 sm:mx-auto sm:max-w-lg sm:px-5 sm:py-6">
         <h1 className="sr-only">Mode Cariste</h1>
 
         <div className="mb-5 space-y-3 sm:mb-6">
@@ -169,6 +170,7 @@ export default function CaristePage() {
           {erreur && <p className="mt-4 rounded-2xl border border-[#78BE20]/30 bg-[#1A2226] p-4 text-center text-[#AAB2B7]" role="alert">{erreur}</p>}
         </div>
       </div>
+      <MobileDebug />
     </main>
   );
 }
