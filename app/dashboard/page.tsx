@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import RRSidebar from "@/components/dashboard/RRSidebar";
 import { supabase } from "@/lib/supabase";
+import { getFirstNameFromEmail } from "@/lib/profile-utils";
 import { ProfileService } from "@/services/profile";
 
 type Arrivage = { statut: string | null };
@@ -23,6 +24,8 @@ const STATUTS_PREPARATION = ["EN_PREPARATION", "PREPARATION"];
 
 export default function DashboardRR() {
   const [prenom, setPrenom] = useState<string | null>(null);
+  const [rayonsAffiches, setRayonsAffiches] = useState("Aucun rayon associé");
+  const [rayonsComplets, setRayonsComplets] = useState("Aucun rayon associé");
   const [arrivagesActifs, setArrivagesActifs] = useState(0);
   const [palettesTotales, setPalettesTotales] = useState(0);
   const [enPreparation, setEnPreparation] = useState(0);
@@ -31,9 +34,20 @@ export default function DashboardRR() {
     async function chargerIdentite() {
       try {
         const profil = await ProfileService.getCurrentProfile();
-        setPrenom(profil.prenom);
+        setPrenom(getFirstNameFromEmail(profil.email));
+        const rayons = profil.rayons
+          .filter((rayon) => rayon.actif && rayon.magasin_id === profil.magasinId)
+          .sort((a, b) => a.code.localeCompare(b.code));
+        const libelles = rayons.map((rayon) => `${rayon.code} ${rayon.nom}`);
+        const resume = libelles.length > 2
+          ? `${libelles.slice(0, 2).join(" · ")} · +${libelles.length - 2} autre${libelles.length - 2 > 1 ? "s" : ""}`
+          : libelles.join(" · ");
+        setRayonsAffiches(resume || "Aucun rayon associé");
+        setRayonsComplets(libelles.join(" · ") || "Aucun rayon associé");
       } catch {
         setPrenom(null);
+        setRayonsAffiches("Aucun rayon associé");
+        setRayonsComplets("Aucun rayon associé");
       }
     }
 
@@ -73,8 +87,8 @@ export default function DashboardRR() {
 
         <div className="mx-auto max-w-7xl p-5 sm:p-8">
           <section className="relative min-h-[250px] overflow-hidden rounded-3xl border border-[#E3E8EC] bg-white px-6 py-8 sm:min-h-[280px] sm:px-10 sm:py-10">
-            <div className="relative z-10 max-w-md">
-              <p className="text-sm font-bold uppercase tracking-[0.18em] text-[#66727A]">Responsable de rayon</p>
+            <div className="relative z-10 max-w-xl">
+              <p title={rayonsComplets} className="text-sm font-bold uppercase leading-relaxed tracking-[0.18em] text-[#66727A]">Responsable de rayon — {rayonsAffiches}</p>
               <h1 className="mt-3 text-3xl font-black sm:text-4xl">
                 {nomAffiche} <span aria-hidden="true">👋</span>
               </h1>
