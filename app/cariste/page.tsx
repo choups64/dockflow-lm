@@ -68,9 +68,9 @@ export default function CaristePage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#090D0F] pb-10 text-white">
+    <main className="min-h-screen overflow-x-hidden bg-[#090D0F] pb-8 text-white sm:pb-10">
       <header className="border-b border-[#78BE20] bg-[#11181C] shadow-lg shadow-black/20">
-        <div className="mx-auto flex max-w-lg items-center gap-5 px-5 py-5 sm:px-6">
+        <div className="mx-auto flex w-full max-w-lg items-center gap-4 px-3 py-4 sm:gap-5 sm:px-5 sm:py-5">
           <Image
             src="/leroy-merlin-logo.svg"
             alt="Leroy Merlin"
@@ -86,48 +86,48 @@ export default function CaristePage() {
         </div>
       </header>
 
-      <div className="mx-auto max-w-lg px-4 py-6 sm:px-6">
+      <div className="mx-auto w-full max-w-lg px-3 py-4 sm:px-5 sm:py-6">
         <h1 className="sr-only">Mode Cariste</h1>
 
-        <div className="mb-6 space-y-3">
+        <div className="mb-5 space-y-3 sm:mb-6">
           <button
             onClick={() => void changerMode("reference")}
             aria-pressed={mode === "reference"}
-            className={`flex min-h-[112px] w-full items-center rounded-3xl border px-5 text-left text-xl font-black tracking-wide transition after:ml-auto after:text-3xl after:font-normal after:content-['›'] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 ${
+            className={`flex min-h-[104px] w-full items-center rounded-2xl border px-4 text-left text-[1.35rem] font-black tracking-wide transition after:ml-auto after:text-3xl after:font-normal after:content-['›'] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 sm:min-h-[112px] sm:rounded-3xl sm:px-5 ${
               mode === "reference" ? "border-[#9bd754] bg-[#78BE20] text-white shadow-inner shadow-[#4D8F12]" : "border-white/[0.08] bg-[#1A2226] text-white hover:bg-[#222C31]"
             }`}
           >
-            <Search className={`mr-5 shrink-0 ${mode === "reference" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
-            <span className="mr-5 h-12 w-px shrink-0 bg-current opacity-25" />
+            <Search className={`mr-4 shrink-0 ${mode === "reference" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
+            <span className="mr-4 h-12 w-px shrink-0 bg-current opacity-25" />
             Référence LM
           </button>
 
           <button
             onClick={() => void changerMode("commande")}
             aria-pressed={mode === "commande"}
-            className={`flex min-h-[112px] w-full items-center rounded-3xl border px-5 text-left text-xl font-black tracking-wide transition after:ml-auto after:text-3xl after:font-normal after:content-['›'] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 ${
+            className={`flex min-h-[104px] w-full items-center rounded-2xl border px-4 text-left text-[1.35rem] font-black tracking-wide transition after:ml-auto after:text-3xl after:font-normal after:content-['›'] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 sm:min-h-[112px] sm:rounded-3xl sm:px-5 ${
               mode === "commande" ? "border-[#9bd754] bg-[#78BE20] text-white shadow-inner shadow-[#4D8F12]" : "border-white/[0.08] bg-[#1A2226] text-white hover:bg-[#222C31]"
             }`}
           >
-            <PackageSearch className={`mr-5 shrink-0 ${mode === "commande" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
-            <span className="mr-5 h-12 w-px shrink-0 bg-current opacity-25" />
+            <PackageSearch className={`mr-4 shrink-0 ${mode === "commande" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
+            <span className="mr-4 h-12 w-px shrink-0 bg-current opacity-25" />
             Commande
           </button>
 
           <button
             onClick={() => void changerMode("rayon")}
             aria-pressed={mode === "rayon"}
-            className={`flex min-h-[112px] w-full items-center rounded-3xl border px-5 text-left text-xl font-black tracking-wide transition after:ml-auto after:text-3xl after:font-normal after:content-['›'] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 ${
+            className={`flex min-h-[104px] w-full items-center rounded-2xl border px-4 text-left text-[1.35rem] font-black tracking-wide transition after:ml-auto after:text-3xl after:font-normal after:content-['›'] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50 sm:min-h-[112px] sm:rounded-3xl sm:px-5 ${
               mode === "rayon" ? "border-[#9bd754] bg-[#78BE20] text-white shadow-inner shadow-[#4D8F12]" : "border-white/[0.08] bg-[#1A2226] text-white hover:bg-[#222C31]"
             }`}
           >
-            <Building2 className={`mr-5 shrink-0 ${mode === "rayon" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
-            <span className="mr-5 h-12 w-px shrink-0 bg-current opacity-25" />
+            <Building2 className={`mr-4 shrink-0 ${mode === "rayon" ? "text-white" : "text-[#AAB2B7]"}`} size={42} aria-hidden="true" />
+            <span className="mr-4 h-12 w-px shrink-0 bg-current opacity-25" />
             Rayon
           </button>
         </div>
 
-        <div className="rounded-3xl border border-white/[0.08] bg-[#11181C] p-5 shadow-xl shadow-black/20">
+        <div className="rounded-2xl border border-white/[0.08] bg-[#11181C] p-4 shadow-xl shadow-black/20 sm:rounded-3xl sm:p-5">
           {mode === "rayon" ? (
             <form onSubmit={soumettreRecherche}>
               <label htmlFor="rayon" className="mb-3 block text-sm font-bold uppercase tracking-[0.14em] text-[#AAB2B7]">Rayon</label>
@@ -136,14 +136,14 @@ export default function CaristePage() {
                 value={rayonSelectionne}
                 onChange={(event) => setRayonSelectionne(event.target.value)}
                 disabled={loadingRayons}
-                className="w-full rounded-2xl border border-white/[0.12] bg-[#1A2226] p-4 text-lg text-white outline-none transition focus:border-[#78BE20] focus:ring-2 focus:ring-[#78BE20]/40 disabled:opacity-60"
+                className="min-h-14 w-full rounded-2xl border border-white/[0.12] bg-[#1A2226] p-4 text-lg text-white outline-none transition focus:border-[#78BE20] focus:ring-2 focus:ring-[#78BE20]/40 disabled:opacity-60"
               >
                 <option value="">{loadingRayons ? "Chargement des rayons..." : "Sélectionner un rayon..."}</option>
                 {rayons.map((rayon) => (
                   <option key={rayon.id} value={rayon.code}>{rayon.code} - {rayon.nom}</option>
                 ))}
               </select>
-              <button type="submit" className="mt-5 min-h-14 w-full rounded-2xl bg-[#78BE20] py-4 text-lg font-black tracking-wide text-white shadow-lg shadow-[#4D8F12]/20 transition hover:bg-[#4D8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50">
+              <button type="submit" className="mt-4 min-h-14 w-full rounded-2xl bg-[#78BE20] py-4 text-lg font-black tracking-wide text-white shadow-lg shadow-[#4D8F12]/20 transition hover:bg-[#4D8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50">
                 Rechercher
               </button>
             </form>
@@ -158,9 +158,9 @@ export default function CaristePage() {
                 onChange={(event) => setRecherche(event.target.value)}
                 inputMode={mode === "reference" ? "numeric" : undefined}
                 placeholder={mode === "reference" ? "Référence Leroy Merlin..." : "Numéro de commande..."}
-                className="w-full rounded-2xl border border-white/[0.12] bg-[#1A2226] p-4 text-lg text-white placeholder:text-[#AAB2B7] outline-none transition focus:border-[#78BE20] focus:ring-2 focus:ring-[#78BE20]/40"
+                className="min-h-14 w-full rounded-2xl border border-white/[0.12] bg-[#1A2226] p-4 text-lg text-white placeholder:text-[#AAB2B7] outline-none transition focus:border-[#78BE20] focus:ring-2 focus:ring-[#78BE20]/40"
               />
-              <button type="submit" className="mt-5 min-h-14 w-full rounded-2xl bg-[#78BE20] py-4 text-lg font-black tracking-wide text-white shadow-lg shadow-[#4D8F12]/20 transition hover:bg-[#4D8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50">
+              <button type="submit" className="mt-4 min-h-14 w-full rounded-2xl bg-[#78BE20] py-4 text-lg font-black tracking-wide text-white shadow-lg shadow-[#4D8F12]/20 transition hover:bg-[#4D8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/50">
                 Rechercher
               </button>
             </form>
