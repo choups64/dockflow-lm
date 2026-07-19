@@ -4,12 +4,17 @@ export interface CurrentProfile {
   id: string;
   email: string;
   role: string;
+  prenom: string | null;
   rayons: {
     id: number;
     code: string;
     nom: string;
   }[];
 }
+
+type ProfileRayonRow = {
+  rayon: CurrentProfile["rayons"][number] | CurrentProfile["rayons"] | null;
+};
 
 export class ProfileService {
   static async getCurrentProfile(): Promise<CurrentProfile> {
@@ -50,7 +55,11 @@ export class ProfileService {
       id: profile.id,
       email: profile.email,
       role: profile.role,
-      rayons: (rayons ?? []).map((r: any) => r.rayon),
+      prenom: typeof profile.prenom === "string" ? profile.prenom : null,
+      rayons: ((rayons ?? []) as unknown as ProfileRayonRow[]).flatMap(({ rayon }) => {
+        if (Array.isArray(rayon)) return rayon;
+        return rayon ? [rayon] : [];
+      }),
     };
   }
 }

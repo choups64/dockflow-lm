@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import RRSidebar from "@/components/dashboard/RRSidebar";
 import { supabase } from "@/lib/supabase";
+import { ProfileService } from "@/services/profile";
 
 type Arrivage = { statut: string | null };
 type LigneArrivage = { nombre_palettes: number | string | null };
@@ -28,11 +29,9 @@ export default function DashboardRR() {
 
   useEffect(() => {
     async function chargerIdentite() {
-      const utilisateur = localStorage.getItem("user");
-      if (!utilisateur) return;
-
       try {
-        setPrenom(JSON.parse(utilisateur).prenom ?? null);
+        const profil = await ProfileService.getCurrentProfile();
+        setPrenom(profil.prenom);
       } catch {
         setPrenom(null);
       }

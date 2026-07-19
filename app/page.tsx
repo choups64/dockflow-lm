@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { users } from "@/lib/users";
+import { supabase } from "@/lib/supabase";
+import { ProfileService } from "@/services/profile";
 
 export default function Home() {
   const router = useRouter();
@@ -10,33 +11,46 @@ export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const connexion = () => {
-    const utilisateur = users.find(
-      (u) => u.email === email && u.password === password
-    );
+  const connexion = async () => {
+    setLoading(true);
+    setError("");
 
-    if (!utilisateur) {
-      setError("Email ou mot de passe incorrect.");
+    try {
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (loginError) {
+        setError(loginError.message);
+        return;
+      }
+
+      const utilisateur = await ProfileService.getCurrentProfile();
+
+      if (utilisateur.role === "CARISTE") {
+      router.push("/cariste");
       return;
     }
 
-    localStorage.setItem(
-      "user",
-      JSON.stringify({
-        prenom: utilisateur.prenom,
-        nom: utilisateur.nom,
-        email: utilisateur.email,
-        role: utilisateur.role,
-        rayon: utilisateur.rayon ?? "",
-        libelleRayon: utilisateur.libelleRayon ?? "",
-      })
-    );
-
-    if (utilisateur.role === "cariste") {
-      router.push("/cariste");
-    } else if (utilisateur.role === "rr") {
+      if (utilisateur.role === "RR") {
       router.push("/dashboard");
+      return;
+    }
+
+      if (utilisateur.role === "ADMIN") {
+        router.push("/admin");
+        return;
+      }
+
+      setError("Rôle utilisateur non reconnu.");
+    } catch (connexionError) {
+      console.error("Impossible de charger le profil Supabase", connexionError);
+      setError("Impossible de charger votre profil.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,9 +97,10 @@ export default function Home() {
 
           <button
             onClick={connexion}
+            disabled={loading}
             className="w-full bg-[#78BE20] hover:bg-[#6BAA1C] text-white font-bold rounded-xl p-4 transition"
           >
-            Se connecter
+            {loading ? "Connexion..." : "Se connecter"}
           </button>
 
         </div>

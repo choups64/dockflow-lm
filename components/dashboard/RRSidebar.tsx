@@ -10,6 +10,7 @@ import {
   Package,
   PlusCircle,
 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 const liens = [
   { href: "/dashboard", label: "Accueil", icon: House },
@@ -22,8 +23,8 @@ export default function RRSidebar() {
   const pathname = usePathname();
   const router = useRouter();
 
-  function deconnexion() {
-    localStorage.removeItem("user");
+  async function deconnexion() {
+    await supabase.auth.signOut();
     router.push("/");
   }
 
