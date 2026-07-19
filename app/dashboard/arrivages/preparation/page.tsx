@@ -124,7 +124,10 @@ export default function PreparationArrivagePage({
     } else {
       if (!arrivageId) return;
 
+try {
 const arrivage = await getArrivageById(arrivageId);
+const profil = await ProfileService.getCurrentProfile();
+if (profil.role === "RR") await ProfileService.assertCurrentUserCanUseRayon(arrivage.rayon_id);
 const lignes = await getLignesArrivage(arrivageId);
 
 const lignesRegroupees = new Map<string, Ligne>();
@@ -157,6 +160,12 @@ setCommande({
   dateLivraison: arrivage.date_arrivee ?? "",
   lignes: Array.from(lignesRegroupees.values()),
 });
+} catch (error) {
+  const message = error instanceof Error ? error.message : "Accès à cet arrivage refusé.";
+  toast.error(message);
+  router.replace("/dashboard/arrivages");
+  return;
+}
     }
 
     if (mode === "create") {

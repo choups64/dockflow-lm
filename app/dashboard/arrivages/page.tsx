@@ -8,6 +8,7 @@ import { Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getStatutArrivage } from "@/lib/arrivages";
+import { ProfileService } from "@/services/profile";
 import RRPageHeader from "@/components/dashboard/RRPageHeader";
 import RRPageLayout from "@/components/dashboard/RRPageLayout";
 
@@ -23,15 +24,36 @@ export default function ArrivagesPage() {
   const router = useRouter();
   const [arrivages, setArrivages] = useState<Arrivage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState<string | null>(null);
 
   async function chargerArrivages() {
-    const { data, error } = await supabase
-      .from("arrivages")
-      .select("*")
-      .order("created_at", { ascending: false });
+    try {
+      setMessage(null);
+      const profil = await ProfileService.getCurrentProfile();
+      const rayons = await ProfileService.getCurrentUserRayons();
+      const rayonIds = rayons.map((rayon) => rayon.id);
 
-    if (!error) setArrivages((data ?? []) as Arrivage[]);
-    setLoading(false);
+      if (!rayonIds.length) {
+        setArrivages([]);
+        setMessage("Aucun rayon n’est associé à votre profil. Contactez un administrateur.");
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("arrivages")
+        .select("*")
+        .eq("magasin_id", profil.magasinId ?? "")
+        .in("rayon_id", rayonIds)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setArrivages((data ?? []) as Arrivage[]);
+    } catch (error) {
+      setArrivages([]);
+      setMessage(error instanceof Error ? error.message : "Impossible de charger les arrivages.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -87,7 +109,9 @@ export default function ArrivagesPage() {
         }
       />
 
-      {arrivages.length === 0 ? (
+      {message && <p className="mb-6 rounded-xl bg-red-50 p-4 text-red-700">{message}</p>}
+
+      {arrivages.length === 0 && !message ? (
         <div className="rounded-3xl border border-dashed border-[#E3E8EC] bg-white p-10 text-center text-[#66727A] shadow-sm">
           Aucun arrivage n&apos;a encore été créé.
         </div>
