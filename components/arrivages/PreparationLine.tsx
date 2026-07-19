@@ -5,7 +5,7 @@
 "use client";
 
 import { Plus, Trash2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import {
   getDestinations,
   type Destination as DestinationDb,
@@ -27,6 +27,7 @@ interface Props {
   quantite: number;
   destinations?: DestinationDb[];
   editable?: boolean;
+  headerAction?: ReactNode;
   onDetailsChange?: (data: { reference: string; designation: string; quantite: number }) => void;
 
   destinationGlobale?: string;
@@ -45,6 +46,7 @@ export default function PreparationLine({
   quantite,
   destinations,
   editable = false,
+  headerAction,
   onDetailsChange,
   destinationGlobale = "",
   modeGlobal = false,
@@ -136,6 +138,7 @@ export default function PreparationLine({
 
   return (
     <article className="rounded-3xl border border-[#E3E8EC] bg-white p-5 shadow-sm sm:p-6">
+      {headerAction && <div className="mb-4 flex items-center justify-end">{headerAction}</div>}
       {editable ? (
         <div className="grid gap-3 sm:grid-cols-[11rem_1fr_9rem]">
           <label className="text-sm font-semibold text-[#101820]">Référence LM
