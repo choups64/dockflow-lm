@@ -33,9 +33,9 @@ export default function DestinationList({
   });
 
   return (
-    <div className="rounded-3xl bg-white p-8 shadow">
+    <section className="rounded-3xl border border-[#E3E8EC] bg-white p-5 shadow-sm sm:p-8">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Destinations</h2>
+        <h2 className="text-2xl font-black text-[#101820]">Destinations</h2>
 
         <button
           type="button"
@@ -46,7 +46,7 @@ export default function DestinationList({
               nb_palettes: 1,
             })
           }
-          className="flex items-center gap-2 rounded-xl bg-[#78BE20] px-4 py-2 text-white"
+          className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#78BE20] px-4 py-2 font-bold text-white transition hover:bg-[#4F8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/30"
         >
           <Plus size={18} aria-hidden="true" />
           Ajouter
@@ -57,7 +57,7 @@ export default function DestinationList({
         {fields.map((field, index) => (
           <div
             key={field.id}
-            className="grid grid-cols-1 items-start gap-4 md:grid-cols-12"
+            className="rounded-2xl border border-[#E3E8EC] bg-[#F6F8FA] p-4 grid grid-cols-1 items-start gap-4 md:grid-cols-12"
           >
             <div className="md:col-span-3">
               <label className="mb-1 block text-sm font-semibold" htmlFor={`reference-lm-${field.id}`}>
@@ -72,7 +72,7 @@ export default function DestinationList({
                     event.target.value = event.target.value.replace(/\D/g, "").slice(0, 8);
                   },
                 })}
-                className="w-full rounded-xl border border-slate-300 p-3"
+                className="min-h-12 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15"
                 placeholder="87007999"
               />
               {errors.destinations?.[index]?.reference_lm && (
@@ -91,7 +91,7 @@ export default function DestinationList({
                 {...register(`destinations.${index}.destination_id`, {
                   valueAsNumber: true,
                 })}
-                className="w-full rounded-xl border border-slate-300 p-3"
+                className="min-h-12 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15"
               >
                 <option value="">Choisir une destination...</option>
                 {destinations.map((destination) => (
@@ -118,7 +118,7 @@ export default function DestinationList({
                 {...register(`destinations.${index}.nb_palettes`, {
                   valueAsNumber: true,
                 })}
-                className="w-full rounded-xl border border-slate-300 p-3"
+                className="min-h-12 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15"
               />
               {errors.destinations?.[index]?.nb_palettes && (
                 <p className="mt-1 text-sm text-red-500">
@@ -131,7 +131,7 @@ export default function DestinationList({
               <button
                 type="button"
                 onClick={() => remove(index)}
-                className="rounded-xl bg-red-500 p-3 text-white transition hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                className="min-h-12 rounded-xl border border-red-200 bg-red-50 p-3 text-red-600 transition hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                 aria-label="Supprimer cette destination"
               >
                 <Trash2 size={18} aria-hidden="true" />
@@ -140,6 +140,6 @@ export default function DestinationList({
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

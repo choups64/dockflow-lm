@@ -28,7 +28,7 @@ export default function RRSidebar() {
   }
 
   return (
-    <aside className="hidden h-screen w-72 shrink-0 flex-col bg-[#0B1115] text-white lg:sticky lg:top-0 lg:flex">
+    <aside className="hidden h-screen w-72 shrink-0 flex-col bg-[#081115] text-white lg:sticky lg:top-0 lg:flex">
       <div className="border-b border-white/10 px-7 py-8">
         <Image
           src="/leroy-merlin-logo.svg"

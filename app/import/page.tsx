@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { ClipboardPaste, ImagePlus, Search } from "lucide-react";
 import { toast } from "sonner";
 import EditableTable from "@/components/import/EditableTable";
+import RRPageHeader from "@/components/dashboard/RRPageHeader";
+import RRPageLayout from "@/components/dashboard/RRPageLayout";
 
 import type { BackoResult } from "@/lib/backo/parser";
 
@@ -114,16 +116,16 @@ function continuer() {
   router.push("/dashboard/arrivages/preparation");
 }
   return (
-    <main className="min-h-screen bg-slate-100 p-10">
-      <div className="max-w-6xl mx-auto">
+    <RRPageLayout>
+      <div className="mx-auto max-w-6xl">
+        <RRPageHeader
+          title="Import BACKO"
+          description="Importez une capture de commande pour préparer rapidement son arrivage."
+        />
 
-        <div className="bg-white rounded-3xl shadow-xl p-10">
+        <section className="rounded-3xl border border-[#E3E8EC] bg-white p-5 shadow-sm sm:p-8">
 
-          <h1 className="text-4xl font-bold text-[#78BE20]">
-            Import BACKO
-          </h1>
-
-          <p className="text-slate-500 mt-3">
+          <p className="text-[#66727A]">
             Faites une capture BACKO avec
             <strong> Windows + Shift + S</strong>,
             puis collez-la avec
@@ -135,7 +137,7 @@ function continuer() {
             onDragOver={(e) => e.preventDefault()}
             onDrop={handleDrop}
             onClick={() => inputRef.current?.click()}
-            className="mt-8 h-[420px] rounded-3xl border-4 border-dashed border-slate-300 bg-slate-50 cursor-pointer flex justify-center items-center overflow-hidden hover:border-[#78BE20] transition"
+            className="mt-8 flex h-[360px] cursor-pointer items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-[#C8D1D8] bg-[#F6F8FA] transition hover:border-[#78BE20] sm:h-[420px]"
           >
             {image ? (
               <img
@@ -148,18 +150,18 @@ function continuer() {
 
                 <ImagePlus
                   size={70}
-                  className="mx-auto text-slate-400"
+                  className="mx-auto rounded-2xl bg-[#EEF7E5] p-4 text-[#4F8F12]"
                 />
 
-                <h2 className="text-2xl font-bold mt-6">
+                <h2 className="text-2xl font-black mt-6 text-[#101820]">
                   Déposez votre capture BACKO
                 </h2>
 
-                <p className="text-slate-500 mt-3">
+                <p className="text-[#66727A] mt-3">
                   ou cliquez pour sélectionner une image
                 </p>
 
-                <div className="mt-8 inline-flex items-center gap-3 rounded-xl bg-slate-200 px-5 py-3">
+                <div className="mt-8 inline-flex items-center gap-3 rounded-xl bg-[#EEF7E5] px-5 py-3 font-semibold text-[#4F8F12]">
 
                   <ClipboardPaste size={22} />
 
@@ -186,7 +188,7 @@ function continuer() {
           <button
             onClick={analyser}
             disabled={!image || loading}
-            className="mt-8 flex items-center gap-3 rounded-2xl bg-[#78BE20] px-8 py-4 text-white font-bold hover:bg-[#63a71b] disabled:opacity-40"
+            className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl bg-[#78BE20] px-6 py-3 font-bold text-white transition hover:bg-[#4F8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/30 disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
           >
             <Search size={22} />
 
@@ -197,9 +199,9 @@ function continuer() {
 
           {result && (
 
-            <div className="mt-10 rounded-2xl border bg-slate-50 p-6">
+            <div className="mt-10 rounded-2xl border border-[#E3E8EC] bg-[#F6F8FA] p-5 sm:p-6">
 
-              <h2 className="text-2xl font-bold mb-6">
+              <h2 className="text-2xl font-black mb-6 text-[#101820]">
                 Analyse BACKO
               </h2>
 
@@ -246,10 +248,10 @@ function continuer() {
   onChange={setLignes}
 />
 
-<div className="mt-6 flex justify-center border-4 border-red-500 p-4">
+<div className="mt-6 flex justify-end">
   <button
   onClick={continuer}
-  className="rounded-xl bg-blue-600 px-6 py-3 font-bold text-white hover:bg-blue-700"
+  className="min-h-12 w-full rounded-xl bg-[#78BE20] px-6 py-3 font-bold text-white transition hover:bg-[#4F8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/30 sm:w-auto"
 >
   Continuer →
 </button>
@@ -259,9 +261,9 @@ function continuer() {
 
           )}
 
-        </div>
+        </section>
 
       </div>
-    </main>
+    </RRPageLayout>
   );
 }

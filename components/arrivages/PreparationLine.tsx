@@ -52,6 +52,7 @@ export default function PreparationLine({
 
   const [listeDestinations, setListeDestinations] = useState<DestinationDb[]>([]);
 
+  // Les deux effets suivants synchronisent les valeurs initiales et la destination globale reçues du parent.
   useEffect(() => {
     getDestinations().then(setListeDestinations).catch(console.error);
   }, []);
@@ -64,11 +65,13 @@ export default function PreparationLine({
         destination: destinationGlobale,
       }));
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRepartitions(prochainesRepartitions);
     onChange?.({ repartitions: prochainesRepartitions });
   }, [destinationGlobale, modeGlobal]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRepartitions((precedentes) => {
       if (
         precedentes.length === repartitionsInitiales.length &&
@@ -122,26 +125,26 @@ export default function PreparationLine({
   const total=repartitions.reduce((t,r)=>t+r.palettes,0);
 
   return (
-    <div className="rounded-2xl border bg-white p-6 shadow-sm">
-      <h3 className="text-xl font-bold">{reference}</h3>
-      <p>{designation}</p>
+    <article className="rounded-3xl border border-[#E3E8EC] bg-white p-5 shadow-sm sm:p-6">
+      <h3 className="text-xl font-black text-[#101820]">{reference}</h3>
+      <p className="mt-1 text-[#66727A]">{designation}</p>
       <p className="mt-2 text-sm">Quantité BACKO : <strong>{quantite}</strong></p>
 
       <div className="mt-4 space-y-3">
         {repartitions.map((r,i)=>(
-          <div key={i} className="flex gap-3">
+          <div key={i} className="flex flex-col gap-3 rounded-2xl border border-[#E3E8EC] bg-[#F6F8FA] p-3 sm:flex-row">
             <input
               type="number"
               value={r.palettes}
               onChange={(e)=>modifierPalettes(i,e.target.value)}
-              className="w-24 rounded border px-2 py-2"
+              className="min-h-11 w-full rounded-xl border border-[#E3E8EC] bg-white px-3 py-2 outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15 sm:w-28"
             />
 
             <select
   value={r.destination ?? ""}
               disabled={modeGlobal}
               onChange={(e)=>modifierDestination(i,e.target.value)}
-              className="flex-1 rounded border px-2 py-2"
+              className="min-h-11 flex-1 rounded-xl border border-[#E3E8EC] bg-white px-3 py-2 outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15"
             >
               <option value="">Choisir...</option>
               {listeDestinations.map((d)=>(
@@ -153,7 +156,7 @@ export default function PreparationLine({
               <button
                 type="button"
                 onClick={() => supprimerDestination(i)}
-                className="rounded border px-2 py-2 text-red-600"
+                className="min-h-11 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-red-600 transition hover:bg-red-100"
                 aria-label="Supprimer cette destination"
               >
                 <Trash2 size={18}/>
@@ -164,19 +167,19 @@ export default function PreparationLine({
       </div>
 
       <div className="mt-5 flex items-center justify-between">
-        <span>Total palettes</span>
-        <strong>{total}</strong>
+        <span className="font-semibold text-[#66727A]">Total palettes</span>
+        <strong className="text-lg text-[#101820]">{total}</strong>
       </div>
 
       {!modeGlobal && (
         <button
           onClick={ajouterDestination}
-          className="mt-5 flex items-center gap-2 rounded-xl bg-[#78BE20] px-4 py-2 text-white"
+          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#78BE20] px-4 py-2 font-bold text-white transition hover:bg-[#4F8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/30"
         >
           <Plus size={18}/>
           Ajouter une destination
         </button>
       )}
-    </div>
+    </article>
   );
 }

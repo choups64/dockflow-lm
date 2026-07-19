@@ -2,8 +2,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import PreparationLine from "@/components/arrivages/PreparationLine";
 import { getDestinations, type Destination } from "@/lib/destinations";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ import {
 } from "@/lib/arrivages";
 import { ProfileService } from "@/services/profile";
 import { RayonsService } from "@/services/rayons";
+import RRPageLayout from "@/components/dashboard/RRPageLayout";
 
 type Repartition = {
   palettes: number;
@@ -295,29 +297,30 @@ setCommande({
 
 if (!commande) {
   return (
-    <main className="min-h-screen bg-slate-100 flex items-center justify-center">
-      <p className="text-xl text-slate-500">
+    <RRPageLayout>
+      <p className="py-10 text-center text-xl text-[#66727A]">
         Chargement de l&apos;arrivage...
       </p>
-    </main>
+    </RRPageLayout>
   );
 }
 
   return (
-    <main className="min-h-screen bg-slate-100 p-8">
-      <div className="max-w-6xl mx-auto">
+    <RRPageLayout>
+      <div className="mx-auto max-w-6xl">
+        <Link href="/dashboard/arrivages" className="mb-5 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-bold text-[#4F8F12] transition hover:bg-[#EEF7E5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#78BE20]"><ArrowLeft size={18} aria-hidden="true" />Retour aux arrivages</Link>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[#78BE20]">
+          <h1 className="text-3xl font-black tracking-tight text-[#101820] sm:text-4xl">
             Préparation de l&apos;arrivage
           </h1>
 
-          <p>Commande {commande.commande}</p>
-          <p>{commande.fournisseur}</p>
-          <p>Livraison : {commande.dateLivraison}</p>
+          <p className="mt-3 text-[#66727A]">Commande {commande.commande}</p>
+          <p className="text-[#66727A]">{commande.fournisseur}</p>
+          <p className="text-[#66727A]">Livraison : {commande.dateLivraison}</p>
         </div>
 
-        <div className="mb-8 rounded-2xl bg-white border p-6 shadow-sm">
+        <section className="mb-8 rounded-3xl border border-[#E3E8EC] bg-white p-5 shadow-sm sm:p-6">
 
           {mode === "create" && (
             <div className="mb-5">
@@ -389,12 +392,12 @@ if (!commande) {
             </div>
           )}
 
-        </div>
+        </section>
 
         <div className="space-y-6">
 
           {commande.lignes.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
+            <div className="rounded-3xl border border-dashed border-[#C8D1D8] bg-white p-8 text-center text-[#66727A]">
               Aucune référence dans cet arrivage. Vous pouvez revenir en arrière pour refaire l&apos;import.
             </div>
           ) : (
@@ -435,11 +438,11 @@ if (!commande) {
 
         </div>
 
-        <div className="mt-10 flex justify-end">
+        <div className="mt-10 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
             onClick={() => enregistrer("PRET_A_RECEVOIR")}
             disabled={commande.lignes.length === 0 || (mode === "create" && (chargementRayon || !!erreurRayon || !rayonId))}
-            className="mr-4 rounded-xl bg-blue-600 px-8 py-4 text-white font-bold disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-12 w-full rounded-xl border border-[#D4E9BA] bg-[#EEF7E5] px-6 py-3 font-bold text-[#4F8F12] transition hover:bg-[#DDEFCB] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/20 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             Valider la préparation
           </button>
@@ -447,13 +450,13 @@ if (!commande) {
           <button
             onClick={() => enregistrer()}
             disabled={commande.lignes.length === 0 || (mode === "create" && (chargementRayon || !!erreurRayon || !rayonId))}
-            className="rounded-xl bg-[#78BE20] px-8 py-4 text-white font-bold disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-12 w-full rounded-xl bg-[#78BE20] px-6 py-3 font-bold text-white transition hover:bg-[#4F8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/30 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             Enregistrer l&apos;arrivage
           </button>
         </div>
 
       </div>
-    </main>
+    </RRPageLayout>
   );
 }
