@@ -37,8 +37,19 @@ begin
   update public.arrivages set magasin_id = pilote where magasin_id is null;
 end $$;
 
-alter table public.profiles
-  add constraint profiles_admin_scope_check check (admin_scope is null or admin_scope in ('MAGASIN', 'NATIONAL'));
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'profiles_admin_scope_check'
+      and conrelid = 'public.profiles'::regclass
+  ) then
+    alter table public.profiles
+      add constraint profiles_admin_scope_check
+      check (admin_scope is null or admin_scope in ('MAGASIN', 'NATIONAL'));
+  end if;
+end $$;
 
 do $$
 begin
