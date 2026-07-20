@@ -22,11 +22,15 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DockFlow LM",
   description: "Gestion des arrivages Leroy Merlin",
+  icons: {
+    apple: "/dockflow-icon.png",
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#78BE20",
 };
 
 export default function RootLayout({
