@@ -70,6 +70,8 @@ export default function PreparationLine({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setRepartitions(prochainesRepartitions);
     onChange?.({ repartitions: prochainesRepartitions });
+    // La synchronisation ne doit se déclencher que lorsque le mode global ou sa valeur change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destinationGlobale, modeGlobal]);
 
   useEffect(() => {

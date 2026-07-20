@@ -1,4 +1,20 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { destinationValue, getDestinations, type Destination } from "@/lib/destinations";
+
 export default function NouvelArrivage() {
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [chargementDestinations, setChargementDestinations] = useState(true);
+  const [erreurDestinations, setErreurDestinations] = useState<string | null>(null);
+
+  useEffect(() => {
+    getDestinations()
+      .then(setDestinations)
+      .catch((error: unknown) => setErreurDestinations(error instanceof Error ? error.message : "Impossible de charger les destinations."))
+      .finally(() => setChargementDestinations(false));
+  }, []);
+
   return (
     <main className="min-h-screen bg-gray-100 p-8">
 
@@ -9,7 +25,7 @@ export default function NouvelArrivage() {
         </h1>
 
         <p className="text-gray-500 mt-2 mb-8">
-          Préparer la réception avant l'arrivée du camion.
+          Préparer la réception avant l&apos;arrivée du camion.
         </p>
 
         {/* TYPE */}
@@ -17,7 +33,7 @@ export default function NouvelArrivage() {
         <div className="mb-8">
 
           <label className="block font-semibold mb-3">
-            Type d'arrivage
+            Type d&apos;arrivage
           </label>
 
           <div className="flex gap-8">
@@ -83,17 +99,11 @@ export default function NouvelArrivage() {
               Destination
             </label>
 
-            <select className="w-full border rounded-lg p-3">
-
-              <option>MER</option>
-              <option>Réserve 1</option>
-              <option>Réserve 2</option>
-              <option>BMV</option>
-              <option>Rack Effi</option>
-              <option>Chapiteau</option>
-              <option>Autre</option>
-
+            <select disabled={chargementDestinations || Boolean(erreurDestinations)} className="w-full border rounded-lg p-3">
+              <option value="">{chargementDestinations ? "Chargement des destinations..." : destinations.length ? "Choisir une destination..." : "Aucune destination disponible"}</option>
+              {destinations.map((destination) => <option key={destination.id} value={destinationValue(destination)}>{destination.nom}</option>)}
             </select>
+            {erreurDestinations && <p className="mt-2 text-sm text-red-600">{erreurDestinations}</p>}
 
           </div>
 
