@@ -33,6 +33,23 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
+export async function GET(request: NextRequest) {
+  try {
+    const { admin, profile: caller } = await authorize(request);
+    let profilesQuery = admin.from("profiles").select("id, email, role, magasin_id, admin_scope, actif, created_at").order("created_at", { ascending: false });
+    if (caller.admin_scope !== "NATIONAL" && caller.magasin_id) profilesQuery = profilesQuery.eq("magasin_id", caller.magasin_id);
+
+    const [{ data: profiles, error: profilesError }, { data: authUsers, error: authUsersError }] = await Promise.all([profilesQuery, admin.auth.admin.listUsers({ page: 1, perPage: 1000 })]);
+    if (profilesError) throw profilesError;
+    if (authUsersError) throw authUsersError;
+
+    const lastSignInById = new Map(authUsers.users.map((user) => [user.id, user.last_sign_in_at ?? null]));
+    return NextResponse.json({ users: (profiles ?? []).map((user) => ({ ...user, lastSignInAt: lastSignInById.get(user.id) ?? null })) });
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Erreur serveur." }, { status: 400 });
+  }
+}
+
 async function authorize(request: NextRequest) {
   const { auth, admin, token } = createClients(request);
   if (!token) throw new Error("Session administrateur requise.");
