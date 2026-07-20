@@ -1,7 +1,7 @@
 // app/dashboard/arrivages/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Pencil, Plus, Trash2 } from "lucide-react";
@@ -18,6 +18,16 @@ type Arrivage = {
   fournisseur: string | null;
   date_arrivee: string | null;
   statut: string;
+  created_at?: string | null;
+};
+
+type OrdreDate = "desc" | "asc";
+type FiltreStatut = "TOUS" | "EN_PREPARATION" | "PRET_A_RECEVOIR" | "RECEPTIONNEE";
+
+const libellesStatuts: Record<Exclude<FiltreStatut, "TOUS">, string> = {
+  EN_PREPARATION: "En préparation",
+  PRET_A_RECEVOIR: "Prêt à recevoir",
+  RECEPTIONNEE: "Réceptionnée",
 };
 
 export default function ArrivagesPage() {
@@ -25,6 +35,27 @@ export default function ArrivagesPage() {
   const [arrivages, setArrivages] = useState<Arrivage[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
+  const [ordreDate, setOrdreDate] = useState<OrdreDate>("desc");
+  const [filtreStatut, setFiltreStatut] = useState<FiltreStatut>("TOUS");
+
+  const arrivagesAffiches = useMemo(() => {
+    const datePourTri = (arrivage: Arrivage) => {
+      const date = arrivage.date_arrivee ? new Date(arrivage.date_arrivee).getTime() : 0;
+      const creation = arrivage.created_at ? new Date(arrivage.created_at).getTime() : 0;
+      return { date: Number.isNaN(date) ? 0 : date, creation: Number.isNaN(creation) ? 0 : creation };
+    };
+
+    return arrivages
+      .filter((arrivage) => filtreStatut === "TOUS" || arrivage.statut === filtreStatut)
+      .sort((a, b) => {
+        const aDates = datePourTri(a);
+        const bDates = datePourTri(b);
+        const resultat = aDates.date - bDates.date || aDates.creation - bDates.creation;
+        return ordreDate === "desc" ? -resultat : resultat;
+      });
+  }, [arrivages, filtreStatut, ordreDate]);
+
+  const filtresParDefaut = ordreDate === "desc" && filtreStatut === "TOUS";
 
   async function chargerArrivages() {
     try {
@@ -111,9 +142,29 @@ export default function ArrivagesPage() {
 
       {message && <p className="mb-6 rounded-xl bg-red-50 p-4 text-red-700">{message}</p>}
 
+      {!message && <section className="mb-6 flex flex-col gap-3 rounded-2xl border border-[#E3E8EC] bg-white p-4 shadow-sm sm:flex-row sm:items-end">
+        <label className="flex-1 text-sm font-semibold text-[#101820]">Trier par date
+          <select value={ordreDate} onChange={(event) => setOrdreDate(event.target.value as OrdreDate)} className="mt-1.5 min-h-11 w-full rounded-xl border border-[#E3E8EC] bg-white px-3 text-[#101820] outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15">
+            <option value="desc">Plus récente en premier</option>
+            <option value="asc">Plus ancienne en premier</option>
+          </select>
+        </label>
+        <label className="flex-1 text-sm font-semibold text-[#101820]">Filtrer par statut
+          <select value={filtreStatut} onChange={(event) => setFiltreStatut(event.target.value as FiltreStatut)} className="mt-1.5 min-h-11 w-full rounded-xl border border-[#E3E8EC] bg-white px-3 text-[#101820] outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15">
+            <option value="TOUS">Tous les statuts</option>
+            {Object.entries(libellesStatuts).map(([statut, libelle]) => <option key={statut} value={statut}>{libelle}</option>)}
+          </select>
+        </label>
+        <button type="button" disabled={filtresParDefaut} onClick={() => { setOrdreDate("desc"); setFiltreStatut("TOUS"); }} className="min-h-11 rounded-xl border border-[#D4E9BA] bg-[#EEF7E5] px-4 font-bold text-[#4F8F12] transition hover:bg-[#DDEFCB] disabled:cursor-not-allowed disabled:opacity-50">Réinitialiser</button>
+      </section>}
+
       {arrivages.length === 0 && !message ? (
         <div className="rounded-3xl border border-dashed border-[#E3E8EC] bg-white p-10 text-center text-[#66727A] shadow-sm">
           Aucun arrivage n&apos;a encore été créé.
+        </div>
+      ) : arrivagesAffiches.length === 0 && !message ? (
+        <div className="rounded-3xl border border-dashed border-[#E3E8EC] bg-white p-10 text-center text-[#66727A] shadow-sm">
+          Aucun arrivage ne correspond à ces critères.
         </div>
       ) : (
         <div className="overflow-hidden rounded-3xl border border-[#E3E8EC] bg-white shadow-sm">
@@ -129,7 +180,7 @@ export default function ArrivagesPage() {
                 </tr>
               </thead>
               <tbody>
-                {arrivages.map((a) => {
+                {arrivagesAffiches.map((a) => {
                   const statut = getStatutArrivage(a.statut);
                   return (
                     <tr key={a.id} className="border-t border-[#E3E8EC] transition hover:bg-[#F6F8FA]">
@@ -145,7 +196,7 @@ export default function ArrivagesPage() {
             </table>
           </div>
           <div className="space-y-3 p-4 md:hidden">
-            {arrivages.map((a) => {
+            {arrivagesAffiches.map((a) => {
               const statut = getStatutArrivage(a.statut);
               return (
                 <article key={a.id} className="rounded-2xl border border-[#E3E8EC] p-4">

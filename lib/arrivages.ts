@@ -17,6 +17,11 @@ export const STATUTS_ARRIVAGE = {
     emoji: "🔵",
     badgeClassName: "bg-blue-100 text-blue-800",
   },
+  RECEPTIONNEE: {
+    libelle: "Réceptionnée",
+    emoji: "🔵",
+    badgeClassName: "bg-blue-100 text-blue-800",
+  },
 } as const;
 
 export type StatutArrivage = keyof typeof STATUTS_ARRIVAGE;
