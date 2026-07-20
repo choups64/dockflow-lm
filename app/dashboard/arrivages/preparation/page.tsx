@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import PreparationLine from "@/components/arrivages/PreparationLine";
-import { getDestinations, type Destination } from "@/lib/destinations";
+import { destinationValue, getDestinations, resolveDestinationValue, type Destination } from "@/lib/destinations";
 import { toast } from "sonner";
 import {
   getArrivageById,
@@ -78,6 +78,8 @@ export default function PreparationArrivagePage({
   const [globalCommande, setGlobalCommande] = useState(true);
   const [destinationGlobale, setDestinationGlobale] = useState("");
   const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [chargementDestinations, setChargementDestinations] = useState(true);
+  const [erreurDestinations, setErreurDestinations] = useState<string | null>(null);
   const [rayonsDuProfil, setRayonsDuProfil] = useState<RayonProfil[]>([]);
   const [rayonId, setRayonId] = useState("");
   const [chargementRayon, setChargementRayon] = useState(mode === "create");
@@ -190,10 +192,26 @@ setCommande({
       }
     }
 
-    const profilDestinations = await ProfileService.getCurrentProfile();
-    getDestinations(profilDestinations.magasinId ?? undefined)
-      .then(setDestinations)
-      .catch(console.error);
+    try {
+      const destinationsChargees = await getDestinations(mode === "edit" && arrivageId ? { arrivageId } : undefined);
+      setDestinations(destinationsChargees);
+      setCommande((precedente) => precedente ? {
+        ...precedente,
+        lignes: precedente.lignes.map((ligne) => ({
+          ...ligne,
+          repartitions: ligne.repartitions?.map((repartition) => ({
+            ...repartition,
+            destination: resolveDestinationValue(repartition.destination, destinationsChargees),
+          })),
+        })),
+      } : precedente);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Impossible de charger les destinations.";
+      setErreurDestinations(message);
+      toast.error(message);
+    } finally {
+      setChargementDestinations(false);
+    }
   }
 
   initialiser();
@@ -359,17 +377,19 @@ if (!commande) {
             <select
               value={destinationGlobale}
               onChange={(e)=>setDestinationGlobale(e.target.value)}
+              disabled={chargementDestinations}
               className="w-full rounded-xl border p-3"
             >
-              <option value="">Choisir une destination...</option>
+              <option value="">{chargementDestinations ? "Chargement des destinations..." : destinations.some((destination) => destination.actif) ? "Choisir une destination..." : "Aucune destination disponible"}</option>
 
-              {destinations.map((d)=>(
-                <option key={d.id} value={d.code}>
+              {destinations.filter((destination) => destination.actif).map((d)=>(
+                <option key={d.id} value={destinationValue(d)}>
                   {d.nom}
                 </option>
               ))}
             </select>
           )}
+          {erreurDestinations && <p className="mt-3 text-sm font-semibold text-red-600">{erreurDestinations}</p>}
 
           {!globalCommande && (
             <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 mt-4">

@@ -6,10 +6,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import {
-  getDestinations,
-  type Destination as DestinationDb,
-} from "@/lib/destinations";
+import { destinationValue, type Destination as DestinationDb } from "@/lib/destinations";
 
 type Repartition = {
   palettes: number;
@@ -58,16 +55,9 @@ export default function PreparationLine({
     repartitionsInitiales
   );
 
-  const [listeDestinations, setListeDestinations] = useState<DestinationDb[]>([]);
-
   // Les deux effets suivants synchronisent les valeurs initiales et la destination globale reçues du parent.
-  useEffect(() => {
-    if (destinations) return;
-
-    getDestinations().then(setListeDestinations).catch(console.error);
-  }, [destinations]);
-
-  const destinationsDisponibles = destinations ?? listeDestinations;
+  const destinationsDisponibles = destinations ?? [];
+  const destinationsActives = destinationsDisponibles.filter((destination) => destination.actif);
 
   useEffect(() => {
     if (!modeGlobal || !destinationGlobale) return;
@@ -175,9 +165,9 @@ export default function PreparationLine({
               onChange={(e)=>modifierDestination(i,e.target.value)}
               className="min-h-11 flex-1 rounded-xl border border-[#E3E8EC] bg-white px-3 py-2 outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15"
             >
-              <option value="">Choisir...</option>
+              <option value="">{destinationsActives.length ? "Choisir..." : "Aucune destination disponible"}</option>
               {destinationsDisponibles.map((d)=>(
-                <option key={d.id} value={d.code}>{d.nom}</option>
+                <option key={d.id} value={destinationValue(d)} disabled={!d.actif}>{d.nom}{d.actif ? "" : " (inactive)"}</option>
               ))}
             </select>
 

@@ -4,19 +4,29 @@ export type Destination = {
   id: number;
   code: string;
   nom: string;
+  magasin_id: string | null;
+  actif: boolean;
 };
 
-export async function getDestinations(magasinId?: string) {
-  let query = supabase
-    .from("destinations")
-    .select("*")
-    .eq("actif", true)
-    .order("id");
+export async function getDestinations(options?: { arrivageId?: string }) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const params = new URLSearchParams();
+  if (options?.arrivageId) params.set("arrivageId", options.arrivageId);
 
-  if (magasinId) query = query.eq("magasin_id", magasinId);
-  const { data, error } = await query;
+  const response = await fetch(`/api/rr/destinations${params.size ? `?${params}` : ""}`, {
+    headers: { Authorization: `Bearer ${sessionData.session?.access_token ?? ""}` },
+  });
+  const result = (await response.json()) as { destinations?: Destination[]; error?: string };
+  if (!response.ok) throw new Error(result.error ?? "Impossible de charger les destinations.");
+  return result.destinations ?? [];
+}
 
-  if (error) throw error;
+export function destinationValue(destination: Pick<Destination, "id">) {
+  return String(destination.id);
+}
 
-  return data as Destination[];
+export function resolveDestinationValue(value: string | null | undefined, destinations: Destination[]) {
+  if (!value) return "";
+  const destination = destinations.find((item) => String(item.id) === value || item.code === value);
+  return destination ? destinationValue(destination) : value;
 }

@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import PreparationLine from "@/components/arrivages/PreparationLine";
 import { creerArrivagePreparation, type LignePreparation } from "@/lib/arrivages";
-import { getDestinations, type Destination } from "@/lib/destinations";
+import { destinationValue, getDestinations, type Destination } from "@/lib/destinations";
 import { ProfileService } from "@/services/profile";
 
 type Rayon = { id: number; code: string; nom: string };
@@ -35,26 +35,34 @@ export default function ArrivalForm() {
   const [chargement, setChargement] = useState(true);
   const [enregistrement, setEnregistrement] = useState(false);
   const [erreurRayon, setErreurRayon] = useState<string | null>(null);
+  const [erreurDestinations, setErreurDestinations] = useState<string | null>(null);
   const [preparationValidee, setPreparationValidee] = useState(false);
 
   useEffect(() => {
     async function chargerDonnees() {
-      try {
-        const profil = await ProfileService.getCurrentProfile();
-        const rayonsDuProfil = await ProfileService.getCurrentUserRayons() as Rayon[];
-        const destinationsDuMagasin = await getDestinations(profil.magasinId ?? undefined);
-
+      const [rayonsResult, destinationsResult] = await Promise.allSettled([
+        ProfileService.getCurrentUserRayons() as Promise<Rayon[]>,
+        getDestinations(),
+      ]);
+      if (rayonsResult.status === "fulfilled") {
+        const rayonsDuProfil = rayonsResult.value;
         setRayons(rayonsDuProfil);
-        setDestinations(destinationsDuMagasin);
         if (rayonsDuProfil.length === 1) setRayonId(String(rayonsDuProfil[0].id));
         if (rayonsDuProfil.length === 0) {
           setErreurRayon("Aucun rayon n’est associé à votre profil. Contactez un administrateur.");
         }
-      } catch (error) {
-        setErreurRayon(error instanceof Error ? error.message : "Aucun rayon n’est associé à votre profil. Contactez un administrateur.");
-      } finally {
-        setChargement(false);
+      } else {
+        setErreurRayon(rayonsResult.reason instanceof Error ? rayonsResult.reason.message : "Impossible de charger les rayons du profil.");
       }
+
+      if (destinationsResult.status === "fulfilled") {
+        setDestinations(destinationsResult.value);
+      } else {
+        const message = destinationsResult.reason instanceof Error ? destinationsResult.reason.message : "Impossible de charger les destinations.";
+        setErreurDestinations(message);
+        toast.error(message);
+      }
+      setChargement(false);
     }
 
     chargerDonnees();
@@ -172,9 +180,10 @@ export default function ArrivalForm() {
             <span className="font-semibold text-[#101820]">Toute la commande va à la même destination</span>
           </label>
           {globalCommande && <select value={destinationGlobale} onChange={(event) => { setDestinationGlobale(event.target.value); invaliderPreparation(); }} className="mt-5 min-h-12 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 text-[#101820] outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15">
-            <option value="">Choisir une destination...</option>
-            {destinations.map((destination) => <option key={destination.id} value={destination.code}>{destination.nom}</option>)}
+            <option value="">{destinations.length ? "Choisir une destination..." : "Aucune destination disponible"}</option>
+            {destinations.map((destination) => <option key={destination.id} value={destinationValue(destination)}>{destination.nom}</option>)}
           </select>}
+          {erreurDestinations && <p className="mt-3 text-sm font-semibold text-red-600">{erreurDestinations}</p>}
         </section>
 
         <div className="space-y-6">
