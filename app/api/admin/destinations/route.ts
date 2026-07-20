@@ -159,3 +159,77 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ error: "Une erreur inattendue empêche la modification de la destination." }, { status: 500 });
   }
 }
+
+type DestinationDeletePayload = {
+  id?: number;
+};
+
+const destinationUtiliseeMessage = "Cette destination est déjà utilisée dans un ou plusieurs arrivages. Elle ne peut pas être supprimée.";
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const { auth, admin, token } = createClients(request);
+    if (!token) return NextResponse.json({ error: "Session administrateur requise." }, { status: 401 });
+
+    const { data: userData, error: userError } = await auth.auth.getUser(token);
+    if (userError || !userData.user) return NextResponse.json({ error: "Session administrateur invalide." }, { status: 401 });
+
+    const { data: profile, error: profileError } = await admin
+      .from("profiles")
+      .select("id, role, admin_scope, magasin_id, actif")
+      .eq("id", userData.user.id)
+      .maybeSingle();
+    if (profileError) throw profileError;
+    if (!profile || profile.role !== "ADMIN" || profile.actif === false) {
+      return NextResponse.json({ error: "Cette action est réservée aux administrateurs actifs." }, { status: 403 });
+    }
+
+    let payload: DestinationDeletePayload;
+    try {
+      payload = (await request.json()) as DestinationDeletePayload;
+    } catch {
+      return NextResponse.json({ error: "Requête de suppression invalide." }, { status: 400 });
+    }
+    if (!Number.isInteger(payload.id) || (payload.id ?? 0) <= 0) {
+      return NextResponse.json({ error: "Destination invalide." }, { status: 400 });
+    }
+
+    const { data: destination, error: destinationError } = await admin
+      .from("destinations")
+      .select("id, code, magasin_id")
+      .eq("id", payload.id!)
+      .maybeSingle();
+    if (destinationError) throw destinationError;
+    if (!destination) return NextResponse.json({ error: "Destination introuvable." }, { status: 404 });
+
+    if (profile.admin_scope !== "NATIONAL" && (destination.magasin_id === null || destination.magasin_id !== profile.magasin_id)) {
+      return NextResponse.json({ error: "Vous ne pouvez supprimer que les destinations de votre magasin." }, { status: 403 });
+    }
+
+    const [arrivageDestinations, lignesParId, lignesParAncienCode] = await Promise.all([
+      admin.from("arrivage_destinations").select("destination_id", { count: "exact", head: true }).eq("destination_id", destination.id),
+      admin.from("arrivage_lignes").select("destination", { count: "exact", head: true }).eq("destination", String(destination.id)),
+      admin.from("arrivage_lignes").select("destination", { count: "exact", head: true }).eq("destination", destination.code),
+    ]);
+    const usageError = arrivageDestinations.error || lignesParId.error || lignesParAncienCode.error;
+    if (usageError) throw usageError;
+    if ((arrivageDestinations.count ?? 0) + (lignesParId.count ?? 0) + (lignesParAncienCode.count ?? 0) > 0) {
+      return NextResponse.json({ error: destinationUtiliseeMessage }, { status: 409 });
+    }
+
+    const { data: deleted, error: deleteError } = await admin
+      .from("destinations")
+      .delete()
+      .eq("id", destination.id)
+      .select("id")
+      .maybeSingle();
+    if (deleteError?.code === "23503") return NextResponse.json({ error: destinationUtiliseeMessage }, { status: 409 });
+    if (deleteError) throw deleteError;
+    if (!deleted) return NextResponse.json({ error: "Destination introuvable." }, { status: 404 });
+
+    return NextResponse.json({ ok: true, message: "Destination supprimée définitivement." });
+  } catch (error) {
+    console.error("Échec de la suppression d’une destination", error);
+    return NextResponse.json({ error: "Une erreur inattendue empêche la suppression de la destination." }, { status: 500 });
+  }
+}
