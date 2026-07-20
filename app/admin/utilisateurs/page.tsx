@@ -13,7 +13,7 @@ type Rayon = { id: number; code: string; nom: string; magasin_id: string };
 type Profile = { id: string; email: string; role: Role; magasin_id: string; admin_scope: AdminScope | null; actif: boolean; created_at: string | null; rayonIds: number[] };
 type Message = { type: "error" | "success"; text: string } | null;
 
-const actionClass = "inline-flex h-9 shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-2.5 text-sm font-bold disabled:opacity-60";
+const actionClass = "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border bg-white text-[0px] transition disabled:opacity-60 [&>svg]:h-3.5 [&>svg]:w-3.5 last:after:content-['◉'] last:after:text-sm";
 
 export default function UtilisateursPage() {
   const [profil, setProfil] = useState<CurrentProfile | null>(null);
