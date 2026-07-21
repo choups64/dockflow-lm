@@ -79,7 +79,6 @@ export default function PreparationArrivagePage({
   const [globalCommande, setGlobalCommande] = useState(true);
   const [destinationGlobale, setDestinationGlobale] = useState("");
   const [commentaireCariste, setCommentaireCariste] = useState("");
-  const [totalPalettesGlobal, setTotalPalettesGlobal] = useState(1);
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [chargementDestinations, setChargementDestinations] = useState(true);
   const [erreurDestinations, setErreurDestinations] = useState<string | null>(null);
@@ -106,10 +105,6 @@ export default function PreparationArrivagePage({
   }
 
   function changerModeGlobal(actif: boolean) {
-    if (actif && commande) {
-      const totalExistant = commande.lignes.reduce((total, ligne) => total + (ligne.repartitions ?? []).reduce((somme, repartition) => somme + Number(repartition.palettes || 0), 0), 0);
-      if (totalExistant > 0) setTotalPalettesGlobal(totalExistant);
-    }
     setGlobalCommande(actif);
   }
 
@@ -136,7 +131,6 @@ export default function PreparationArrivagePage({
         lignes: lignesImportees,
       });
       setCommentaireCariste(commandeImportee.commentaire ?? "");
-      setTotalPalettesGlobal(Math.max(1, lignesImportees.reduce((total, ligne) => total + (ligne.repartitions ?? []).reduce((somme, repartition) => somme + Number(repartition.palettes || 0), 0), 0)));
     } else {
       if (!arrivageId) return;
 
@@ -181,7 +175,6 @@ const valeursDestinations = [...new Set(lignes.map((ligne: LigneArrivageEnregist
 const estGlobal = valeursDestinations.length === 1;
 setGlobalCommande(estGlobal);
 setDestinationGlobale(estGlobal ? valeursDestinations[0] ?? "" : "");
-setTotalPalettesGlobal(Math.max(1, lignes.reduce((total: number, ligne: LigneArrivageEnregistree) => total + Number(ligne.nombre_palettes ?? 0), 0)));
 } catch (error) {
   const message = error instanceof Error ? error.message : "Accès à cet arrivage refusé.";
   toast.error(message);
@@ -249,8 +242,15 @@ setTotalPalettesGlobal(Math.max(1, lignes.reduce((total: number, ligne: LigneArr
       toast.error("Choisissez la destination de la commande.");
       return;
     }
-    if (globalCommande && totalPalettesGlobal <= 0) {
-      toast.error("Le nombre total de palettes doit être supérieur à zéro.");
+    const totalPalettesCalcule = commande.lignes.reduce(
+      (total, ligne) => total + (ligne.repartitions ?? []).reduce(
+        (somme, repartition) => somme + Number(repartition.palettes || 0),
+        0
+      ),
+      0
+    );
+    if (globalCommande && totalPalettesCalcule <= 0) {
+      toast.error("Aucune palette valide n’est disponible dans les répartitions de la commande.");
       return;
     }
 
@@ -265,12 +265,19 @@ setTotalPalettesGlobal(Math.max(1, lignes.reduce((total: number, ligne: LigneArr
     }
 
     const currentCommande = commande;
-    const lignesEnregistrees = currentCommande.lignes.map((ligne, index) => ({
-      ...ligne,
-      repartitions: globalCommande
-        ? [{ palettes: index === 0 ? totalPalettesGlobal : 0, destination: destinationGlobale }]
-        : ligne.repartitions,
-    }));
+    const lignesEnregistrees = currentCommande.lignes.map((ligne) => {
+      const totalLigne = (ligne.repartitions ?? []).reduce(
+        (somme, repartition) => somme + Number(repartition.palettes || 0),
+        0
+      );
+
+      return {
+        ...ligne,
+        repartitions: globalCommande
+          ? [{ palettes: totalLigne, destination: destinationGlobale }]
+          : ligne.repartitions,
+      };
+    });
 
     let dateISO: string | null = null;
 
@@ -424,7 +431,7 @@ if (!commande) {
                   {d.nom}
                 </option>
               ))}
-            </select><label htmlFor="total-palettes-global-preparation" className="font-semibold text-[#101820]">Nombre total de palettes<input id="total-palettes-global-preparation" type="number" min="1" value={totalPalettesGlobal} onChange={(event) => setTotalPalettesGlobal(Number(event.target.value) || 0)} className="mt-2 min-h-12 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 font-normal" /></label><label htmlFor="commentaire-cariste-preparation" className="font-semibold text-[#101820]">Commentaire pour le cariste<textarea id="commentaire-cariste-preparation" rows={4} maxLength={500} value={commentaireCariste} onChange={(event) => setCommentaireCariste(event.target.value)} className="mt-2 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 font-normal" placeholder="Ex : Toute la commande à déposer en BMV, prévenir le rayon à la réception…" /><span className="mt-1 block text-right text-xs font-normal text-[#66727A]">{commentaireCariste.length}/500</span></label></div>
+            </select><label htmlFor="commentaire-cariste-preparation" className="font-semibold text-[#101820]">Commentaire pour le cariste<textarea id="commentaire-cariste-preparation" rows={4} maxLength={500} value={commentaireCariste} onChange={(event) => setCommentaireCariste(event.target.value)} className="mt-2 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 font-normal" placeholder="Ex : Toute la commande à déposer en BMV, prévenir le rayon à la réception…" /><span className="mt-1 block text-right text-xs font-normal text-[#66727A]">{commentaireCariste.length}/500</span></label></div>
           )}
           {erreurDestinations && <p className="mt-3 text-sm font-semibold text-red-600">{erreurDestinations}</p>}
 
