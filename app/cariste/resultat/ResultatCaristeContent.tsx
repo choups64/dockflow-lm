@@ -155,8 +155,8 @@ export default function ResultatCaristePage() {
                         <p className="mt-4 border-y border-white/[0.08] py-3 text-xl font-black text-[#9bd754]">Total palettes : {ligne.totalPalettes}</p>
                         <div className="mt-4 space-y-2">
                           {ligne.destinations.map((destination) => (
-                            <div key={destination.destination ?? "sans-destination"} className="flex min-h-14 items-center justify-between gap-4 rounded-xl border-l-4 border-[#78BE20] bg-[#11181C] px-4">
-                              <p className="min-w-0 break-words text-lg font-bold uppercase tracking-wide">{destination.destination ?? "-"}</p>
+                            <div key={destination.destinationValeur ?? "sans-destination"} className="flex min-h-14 items-center justify-between gap-4 rounded-xl border-l-4 border-[#78BE20] bg-[#11181C] px-4">
+                              <p className="min-w-0 break-words text-lg font-bold uppercase tracking-wide">{destination.destination}</p>
                               <p className="shrink-0 text-3xl font-black text-[#9bd754]">{destination.nombre_palettes}</p>
                             </div>
                           ))}

@@ -26,13 +26,15 @@ export type LigneArrivage = {
   designation: string | null;
   quantite: number;
   destination: string | null;
+  destination_libelle?: string;
   ean: string | null;
   created_at: string;
   nombre_palettes: number;
 };
 
 export type DestinationRegroupee = {
-  destination: string | null;
+  destination: string;
+  destinationValeur: string | null;
   nombre_palettes: number;
 };
 
@@ -76,14 +78,15 @@ export function regrouperResultatsCariste(lignes: LigneArrivage[]): LigneRegroup
       }
 
       const destinationExistante = groupe.destinations.find(
-        (destination) => destination.destination === ligne.destination
+        (destination) => destination.destinationValeur === ligne.destination
       );
 
       if (destinationExistante) {
         destinationExistante.nombre_palettes += nombrePalettes;
       } else {
         groupe.destinations.push({
-          destination: ligne.destination,
+          destination: ligne.destination_libelle ?? "Destination inconnue",
+          destinationValeur: ligne.destination,
           nombre_palettes: nombrePalettes,
         });
       }
@@ -108,9 +111,30 @@ async function chargerLignes(arrivages: Arrivage[], referenceLM?: string): Promi
   if (error) throw error;
 
   const lignes = (data ?? []) as LigneArrivage[];
+  const valeursDestinations = [...new Set(lignes.map((ligne) => ligne.destination).filter((destination): destination is string => Boolean(destination)))];
+  let libelles: Record<string, string> = {};
+  if (valeursDestinations.length > 0) {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const response = await fetch("/api/cariste/destinations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionData.session?.access_token ?? ""}`,
+      },
+      body: JSON.stringify({ valeurs: valeursDestinations }),
+    });
+    const result = (await response.json()) as { libelles?: Record<string, string>; error?: string };
+    if (!response.ok) throw new Error(result.error ?? "Impossible de charger les destinations.");
+    libelles = result.libelles ?? {};
+  }
+
+  const lignesAvecDestination = lignes.map((ligne) => ({
+    ...ligne,
+    destination_libelle: ligne.destination ? libelles[ligne.destination] ?? "Destination inconnue" : "Destination inconnue",
+  }));
   return arrivages.map((arrivage) => ({
     arrivage,
-    lignes: lignes.filter((ligne) => ligne.arrivage_id === arrivage.id),
+    lignes: lignesAvecDestination.filter((ligne) => ligne.arrivage_id === arrivage.id),
   }));
 }
 
