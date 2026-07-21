@@ -165,6 +165,7 @@ export default function ResultatCaristePage() {
                             </div>
                           ))}
                         </div>
+                        {ligne.commentaire_cariste && <div className="mt-4 rounded-xl bg-[#11181C] p-4 text-sm text-[#D7DDE0]"><p className="font-black text-white">Commentaire :</p><p className="mt-1 whitespace-pre-wrap break-words">{ligne.commentaire_cariste}</p></div>}
                       </div>
                     ))}
                     {arrivage.statut === "PRET_A_RECEVOIR" ? (

@@ -45,6 +45,7 @@ export type LignePreparation = {
     destination: string;
   }[];
   ean?: string | null;
+  commentaireCariste?: string | null;
 };
 
 export type ArrivagePreparation = {
@@ -105,6 +106,7 @@ export async function creerArrivagePreparation(data: ArrivagePreparation) {
         destination: r.destination || null,
         nombre_palettes: r.palettes,
         ean: l.ean ?? null,
+        commentaire_cariste: l.commentaireCariste?.trim() || null,
       }))
     );
 
@@ -153,6 +155,7 @@ export async function updateArrivage(
       destination:r.destination || null,
       nombre_palettes:r.palettes,
       ean:l.ean ?? null,
+      commentaire_cariste:l.commentaireCariste?.trim() || null,
     }))
   );
 

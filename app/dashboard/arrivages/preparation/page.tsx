@@ -33,6 +33,7 @@ type Ligne = {
   quantite: number;
   repartitions?: Repartition[];
   ean?: string | null;
+  commentaireCariste?: string | null;
 };
 
 type LigneArrivageEnregistree = {
@@ -42,6 +43,7 @@ type LigneArrivageEnregistree = {
   nombre_palettes: number | null;
   destination: string | null;
   ean: string | null;
+  commentaire_cariste: string | null;
 };
 
 type RayonProfil = {
@@ -151,6 +153,9 @@ lignes.forEach((l: LigneArrivageEnregistree) => {
 
   if (ligneExistante) {
     ligneExistante.repartitions?.push(repartition);
+    if (!ligneExistante.commentaireCariste && l.commentaire_cariste) {
+      ligneExistante.commentaireCariste = l.commentaire_cariste;
+    }
     return;
   }
 
@@ -161,6 +166,7 @@ lignes.forEach((l: LigneArrivageEnregistree) => {
     quantite: l.quantite,
     repartitions: [repartition],
     ean: l.ean,
+    commentaireCariste: l.commentaire_cariste,
   });
 });
 
@@ -437,7 +443,7 @@ if (!commande) {
 
           {!globalCommande && (
             <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 mt-4">
-              Le mode &quot;Répartition de la commande&quot; sera développé dans la prochaine étape.
+              Le mode &quot;Répartition de la commande&quot; s&apos;affiche ci-dessous.
             </div>
           )}
 
@@ -469,6 +475,15 @@ if (!commande) {
                   destinationGlobale={destinationGlobale}
                   destinations={destinations}
                   repartitionsInitiales={ligne.repartitions}
+                  commentaireCariste={ligne.commentaireCariste ?? ""}
+                  onCommentaireChange={(commentaireCariste) => {
+                    setCommande((prev) => prev ? {
+                      ...prev,
+                      lignes: prev.lignes.map((item) =>
+                        item.id === ligne.id ? { ...item, commentaireCariste } : item
+                      ),
+                    } : prev);
+                  }}
                   onChange={({ repartitions }) => {
                     setCommande((prev) => {
                       if (!prev) return prev;

@@ -31,6 +31,7 @@ export type LigneArrivage = {
   ean: string | null;
   created_at: string;
   nombre_palettes: number;
+  commentaire_cariste: string | null;
 };
 
 export type DestinationRegroupee = {
@@ -44,6 +45,7 @@ export type LigneRegroupee = {
   designation: string | null;
   totalPalettes: number;
   destinations: DestinationRegroupee[];
+  commentaire_cariste: string | null;
 };
 
 export type ResultatRecherche = {
@@ -74,8 +76,13 @@ export function regrouperResultatsCariste(lignes: LigneArrivage[]): LigneRegroup
           designation: ligne.designation,
           totalPalettes: 0,
           destinations: [],
+          commentaire_cariste: ligne.commentaire_cariste,
         };
         groupes.set(ligne.reference_lm, groupe);
+      }
+
+      if (!groupe.commentaire_cariste && ligne.commentaire_cariste) {
+        groupe.commentaire_cariste = ligne.commentaire_cariste;
       }
 
       const destinationExistante = groupe.destinations.find(

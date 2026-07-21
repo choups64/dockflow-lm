@@ -19,6 +19,7 @@ const nouvelleLigne = (): LigneManuelle => ({
   designation: "",
   quantite: 0,
   repartitions: [{ palettes: 1, destination: "" }],
+  commentaireCariste: "",
 });
 
 export default function ArrivalForm() {
@@ -93,6 +94,7 @@ export default function ArrivalForm() {
         referenceLM: ligne.referenceLM.trim(),
         designation: ligne.designation.trim(),
         quantite: Number(ligne.quantite || 0),
+        commentaireCariste: ligne.commentaireCariste?.trim() || null,
         repartitions: globalCommande
           ? [{ palettes: totalLigne, destination: destinationGlobale }]
           : ligne.repartitions.map((repartition) => ({ ...repartition, palettes: Number(repartition.palettes || 0) })),
@@ -205,7 +207,7 @@ export default function ArrivalForm() {
 
         {!globalCommande && <div className="space-y-6">
           {lignes.map((ligne) => <div key={ligne.id}>
-            <PreparationLine reference={ligne.referenceLM} designation={ligne.designation} quantite={ligne.quantite} destinations={destinations} editable headerAction={<button type="button" onClick={() => { setLignes((precedentes) => precedentes.filter((item) => item.id !== ligne.id)); invaliderPreparation(); }} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50" aria-label="Supprimer cette référence"><Trash2 size={18} />Supprimer</button>} modeGlobal={globalCommande} destinationGlobale={destinationGlobale} repartitionsInitiales={ligne.repartitions} onDetailsChange={(details) => mettreAJourLigne(ligne.id, { referenceLM: details.reference, designation: details.designation, quantite: details.quantite })} onChange={({ repartitions }) => mettreAJourLigne(ligne.id, { repartitions })} />
+            <PreparationLine reference={ligne.referenceLM} designation={ligne.designation} quantite={ligne.quantite} destinations={destinations} editable headerAction={<button type="button" onClick={() => { setLignes((precedentes) => precedentes.filter((item) => item.id !== ligne.id)); invaliderPreparation(); }} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50" aria-label="Supprimer cette référence"><Trash2 size={18} />Supprimer</button>} modeGlobal={globalCommande} destinationGlobale={destinationGlobale} repartitionsInitiales={ligne.repartitions} commentaireCariste={ligne.commentaireCariste ?? ""} onCommentaireChange={(commentaireCariste) => mettreAJourLigne(ligne.id, { commentaireCariste })} onDetailsChange={(details) => mettreAJourLigne(ligne.id, { referenceLM: details.reference, designation: details.designation, quantite: details.quantite })} onChange={({ repartitions }) => mettreAJourLigne(ligne.id, { repartitions })} />
           </div>)}
         </div>}
         {!globalCommande && <button type="button" onClick={() => { setLignes((precedentes) => [...precedentes, nouvelleLigne()]); invaliderPreparation(); }} className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-[#D4E9BA] bg-[#EEF7E5] px-5 py-3 font-bold text-[#4F8F12] transition hover:bg-[#DDEFCB]"><Plus size={18} />Ajouter une référence</button>}

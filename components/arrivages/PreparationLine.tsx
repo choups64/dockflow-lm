@@ -31,6 +31,8 @@ interface Props {
   modeGlobal?: boolean;
 
   repartitionsInitiales?: Repartition[];
+  commentaireCariste?: string;
+  onCommentaireChange?: (commentaire: string) => void;
 
   onChange?: (data: {
     repartitions: Repartition[];
@@ -48,6 +50,8 @@ export default function PreparationLine({
   destinationGlobale = "",
   modeGlobal = false,
   repartitionsInitiales = repartitionParDefaut,
+  commentaireCariste = "",
+  onCommentaireChange,
   onChange,
 }: Props) {
 
@@ -193,13 +197,28 @@ export default function PreparationLine({
       </div>
 
       {!modeGlobal && (
-        <button
-          onClick={ajouterDestination}
-          className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#78BE20] px-4 py-2 font-bold text-white transition hover:bg-[#4F8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/30"
-        >
-          <Plus size={18}/>
-          Ajouter une destination
-        </button>
+        <>
+          <button
+            type="button"
+            onClick={ajouterDestination}
+            className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-[#78BE20] px-4 py-2 font-bold text-white transition hover:bg-[#4F8F12] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#78BE20]/30"
+          >
+            <Plus size={18}/>
+            Ajouter une destination
+          </button>
+          <label className="mt-5 block font-semibold text-[#101820]">
+            Commentaire pour le cariste
+            <textarea
+              rows={4}
+              maxLength={500}
+              value={commentaireCariste}
+              onChange={(event) => onCommentaireChange?.(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 font-normal outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15"
+              placeholder="Ex : Palette fragile, déposer près du rayon, prévenir le responsable…"
+            />
+            <span className="mt-1 block text-right text-xs font-normal text-[#66727A]">{commentaireCariste.length}/500</span>
+          </label>
+        </>
       )}
     </article>
   );
