@@ -17,6 +17,7 @@ export type Arrivage = {
   statut: string;
   rayon_id: number | null;
   rayon: Rayon | null;
+  commentaire: string | null;
 };
 
 export type LigneArrivage = {

@@ -132,6 +132,10 @@ export default function ResultatCaristePage() {
             {resultats.map(({ arrivage, lignes }) => {
               const lignesRegroupees = regrouperResultatsCariste(lignes);
               const rayon = arrivage.rayon ? `${arrivage.rayon.code} - ${arrivage.rayon.nom}` : null;
+              const valeursDestinations = [...new Set(lignes.map((ligne) => ligne.destination).filter(Boolean))];
+              const modeGlobal = valeursDestinations.length === 1;
+              const totalPalettesGlobal = lignes.reduce((total, ligne) => total + Number(ligne.nombre_palettes || 0), 0);
+              const destinationGlobale = lignes[0]?.destination_libelle ?? "Destination inconnue";
 
               return (
                 <article key={arrivage.id} className="w-full overflow-hidden rounded-2xl border border-white/[0.08] bg-[#1A2226] sm:rounded-3xl">
@@ -148,7 +152,7 @@ export default function ResultatCaristePage() {
                   </div>
 
                   <div className="space-y-3 p-3 sm:p-4">
-                    {lignesRegroupees.map((ligne) => (
+                    {modeGlobal ? <div className="rounded-2xl border border-white/[0.08] bg-[#222C31] p-4"><div className="flex min-h-14 items-center justify-between gap-4 rounded-xl border-l-4 border-[#78BE20] bg-[#11181C] px-4"><p className="min-w-0 break-words text-lg font-bold uppercase tracking-wide">{destinationGlobale}</p><p className="shrink-0 text-3xl font-black text-[#9bd754]">{totalPalettesGlobal}</p></div>{arrivage.commentaire && <p className="mt-4 rounded-xl bg-[#11181C] p-4 text-sm text-[#D7DDE0]"><span className="font-black text-white">Commentaire :</span> {arrivage.commentaire}</p>}</div> : lignesRegroupees.map((ligne) => (
                       <div key={ligne.reference_lm} className="w-full rounded-2xl border border-white/[0.08] bg-[#222C31] p-4">
                         <p className="break-words text-2xl font-black tracking-wide">{ligne.reference_lm}</p>
                         <p className="mt-1 break-words text-[15px] text-[#AAB2B7] sm:text-base">{ligne.designation ?? "-"}</p>

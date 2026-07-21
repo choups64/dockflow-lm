@@ -136,6 +136,7 @@ export async function updateArrivage(
     commande:data.commande,
     fournisseur:data.fournisseur,
     date_arrivee:data.dateLivraison,
+    commentaire:data.commentaire ?? null,
     ...(statut ? { statut } : {}),
     updated_at:new Date().toISOString(),
   }).eq("id",id);

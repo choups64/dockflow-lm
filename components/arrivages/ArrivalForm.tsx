@@ -32,6 +32,7 @@ export default function ArrivalForm() {
   const [lignes, setLignes] = useState<LigneManuelle[]>([nouvelleLigne()]);
   const [globalCommande, setGlobalCommande] = useState(true);
   const [destinationGlobale, setDestinationGlobale] = useState("");
+  const [totalPalettesGlobal, setTotalPalettesGlobal] = useState(1);
   const [chargement, setChargement] = useState(true);
   const [enregistrement, setEnregistrement] = useState(false);
   const [erreurRayon, setErreurRayon] = useState<string | null>(null);
@@ -77,15 +78,23 @@ export default function ArrivalForm() {
     setLignes((precedentes) => precedentes.map((ligne) => ligne.id === id ? { ...ligne, ...modification } : ligne));
   }
 
+  function changerModeGlobal(actif: boolean) {
+    if (actif) {
+      const totalExistant = lignes.reduce((total, ligne) => total + ligne.repartitions.reduce((somme, repartition) => somme + Number(repartition.palettes || 0), 0), 0);
+      if (totalExistant > 0) setTotalPalettesGlobal(totalExistant);
+    }
+    setGlobalCommande(actif);
+    invaliderPreparation();
+  }
+
   function lignesNormalisees(): LignePreparation[] {
-    return lignes.map((ligne) => {
-      const total = ligne.repartitions.reduce((somme, repartition) => somme + Number(repartition.palettes || 0), 0);
+    return lignes.map((ligne, index) => {
       return {
         referenceLM: ligne.referenceLM.trim(),
         designation: ligne.designation.trim(),
         quantite: Number(ligne.quantite || 0),
         repartitions: globalCommande
-          ? [{ palettes: total, destination: destinationGlobale }]
+          ? [{ palettes: index === 0 ? totalPalettesGlobal : 0, destination: destinationGlobale }]
           : ligne.repartitions.map((repartition) => ({ ...repartition, palettes: Number(repartition.palettes || 0) })),
       };
     });
@@ -96,6 +105,9 @@ export default function ArrivalForm() {
     if (!rayonId) return erreurRayon ?? "Sélectionnez un rayon.";
     if (lignes.length === 0) return "Ajoutez au moins une référence.";
     if (globalCommande && !destinationGlobale) return "Choisissez la destination de la commande.";
+    if (globalCommande && totalPalettesGlobal <= 0) return "Le nombre total de palettes doit être supérieur à zéro.";
+
+    if (globalCommande) return null;
 
     for (const ligne of lignesNormalisees()) {
       if (!ligne.referenceLM) return "Chaque ligne doit contenir une référence LM.";
@@ -168,30 +180,28 @@ export default function ArrivalForm() {
                 {rayons.map((rayon) => <option key={rayon.id} value={rayon.id}>{rayon.code} - {rayon.nom}</option>)}
               </select>
             </label>
-            <label className="font-semibold text-[#101820]">Commentaire produit
-              <input value={commentaire} onChange={(event) => { setCommentaire(event.target.value); invaliderPreparation(); }} className="mt-2 min-h-12 w-full rounded-xl border border-[#E3E8EC] px-4 py-3 text-[#101820] outline-none transition placeholder:text-[#66727A] focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15" placeholder="Ex : Salon de jardin" />
-            </label>
           </div>
         </section>
 
         <section className="rounded-3xl border border-[#E3E8EC] bg-white p-5 shadow-sm sm:p-6">
           <label className="flex items-center gap-3">
-            <input type="checkbox" checked={globalCommande} onChange={(event) => { setGlobalCommande(event.target.checked); invaliderPreparation(); }} />
+            <input type="checkbox" checked={globalCommande} onChange={(event) => changerModeGlobal(event.target.checked)} />
             <span className="font-semibold text-[#101820]">Toute la commande va à la même destination</span>
           </label>
           {globalCommande && <select value={destinationGlobale} onChange={(event) => { setDestinationGlobale(event.target.value); invaliderPreparation(); }} className="mt-5 min-h-12 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 text-[#101820] outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15">
             <option value="">{destinations.length ? "Choisir une destination..." : "Aucune destination disponible"}</option>
             {destinations.map((destination) => <option key={destination.id} value={destinationValue(destination)}>{destination.nom}</option>)}
           </select>}
+          {globalCommande && <div className="mt-5 grid gap-5"><label htmlFor="total-palettes-global" className="font-semibold text-[#101820]">Nombre total de palettes<input id="total-palettes-global" type="number" min="1" value={totalPalettesGlobal} onChange={(event) => { setTotalPalettesGlobal(Number(event.target.value) || 0); invaliderPreparation(); }} className="mt-2 min-h-12 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 font-normal outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15" /></label><label htmlFor="commentaire-cariste" className="font-semibold text-[#101820]">Commentaire pour le cariste<textarea id="commentaire-cariste" rows={4} maxLength={500} value={commentaire} onChange={(event) => { setCommentaire(event.target.value); invaliderPreparation(); }} className="mt-2 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 font-normal outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15" placeholder="Ex : Toute la commande à déposer en BMV, prévenir le rayon à la réception…" /><span className="mt-1 block text-right text-xs font-normal text-[#66727A]">{commentaire.length}/500</span></label></div>}
           {erreurDestinations && <p className="mt-3 text-sm font-semibold text-red-600">{erreurDestinations}</p>}
         </section>
 
-        <div className="space-y-6">
+        {!globalCommande && <div className="space-y-6">
           {lignes.map((ligne) => <div key={ligne.id}>
             <PreparationLine reference={ligne.referenceLM} designation={ligne.designation} quantite={ligne.quantite} destinations={destinations} editable headerAction={<button type="button" onClick={() => { setLignes((precedentes) => precedentes.filter((item) => item.id !== ligne.id)); invaliderPreparation(); }} className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 shadow-sm transition hover:bg-red-50" aria-label="Supprimer cette référence"><Trash2 size={18} />Supprimer</button>} modeGlobal={globalCommande} destinationGlobale={destinationGlobale} repartitionsInitiales={ligne.repartitions} onDetailsChange={(details) => mettreAJourLigne(ligne.id, { referenceLM: details.reference, designation: details.designation, quantite: details.quantite })} onChange={({ repartitions }) => mettreAJourLigne(ligne.id, { repartitions })} />
           </div>)}
-        </div>
-        <button type="button" onClick={() => { setLignes((precedentes) => [...precedentes, nouvelleLigne()]); invaliderPreparation(); }} className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-[#D4E9BA] bg-[#EEF7E5] px-5 py-3 font-bold text-[#4F8F12] transition hover:bg-[#DDEFCB]"><Plus size={18} />Ajouter une référence</button>
+        </div>}
+        {!globalCommande && <button type="button" onClick={() => { setLignes((precedentes) => [...precedentes, nouvelleLigne()]); invaliderPreparation(); }} className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-[#D4E9BA] bg-[#EEF7E5] px-5 py-3 font-bold text-[#4F8F12] transition hover:bg-[#DDEFCB]"><Plus size={18} />Ajouter une référence</button>}
       </fieldset>
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
