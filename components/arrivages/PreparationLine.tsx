@@ -151,7 +151,7 @@ export default function PreparationLine({
         <>
           <h3 className="text-xl font-black text-[#101820]">{reference}</h3>
           <p className="mt-1 text-[#66727A]">{designation}</p>
-          <p className="mt-2 text-sm">Quantité BACKO : <strong>{quantite}</strong></p>
+          <p className="mt-2 text-sm">Quantité commandée pour cette référence : <strong>{quantite}</strong></p>
         </>
       )}
 
