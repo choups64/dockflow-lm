@@ -12,8 +12,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (loading) return;
 
     setLoading(true);
     setError("");
@@ -69,6 +71,13 @@ export default function LoginPage() {
     setLoading(false);
   }
 
+  function handleEnterSubmit(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (event.key !== "Enter" || loading) return;
+
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
+  }
+
   return (
     <main className="min-h-screen bg-slate-100 flex items-center justify-center">
 
@@ -90,6 +99,7 @@ export default function LoginPage() {
           className="w-full border rounded-xl p-4 mb-4"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={handleEnterSubmit}
         />
 
         <input
@@ -98,6 +108,7 @@ export default function LoginPage() {
           className="w-full border rounded-xl p-4 mb-6"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          onKeyDown={handleEnterSubmit}
         />
 
         {error && (
