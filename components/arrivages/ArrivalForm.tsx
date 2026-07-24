@@ -89,6 +89,7 @@ export default function ArrivalForm() {
         (somme, repartition) => somme + Number(repartition.palettes || 0),
         0
       );
+      const palettesGlobales = totalLigne > 0 ? totalLigne : 1;
 
       return {
         referenceLM: ligne.referenceLM.trim(),
@@ -96,7 +97,7 @@ export default function ArrivalForm() {
         quantite: Number(ligne.quantite || 0),
         commentaireCariste: ligne.commentaireCariste?.trim() || null,
         repartitions: globalCommande
-          ? [{ palettes: totalLigne, destination: destinationGlobale }]
+          ? [{ palettes: palettesGlobales, destination: destinationGlobale }]
           : ligne.repartitions.map((repartition) => ({ ...repartition, palettes: Number(repartition.palettes || 0) })),
       };
     });
@@ -107,14 +108,6 @@ export default function ArrivalForm() {
     if (!rayonId) return erreurRayon ?? "Sélectionnez un rayon.";
     if (lignes.length === 0) return "Ajoutez au moins une référence.";
     if (globalCommande && !destinationGlobale) return "Choisissez la destination de la commande.";
-    const totalPalettesCalcule = lignesNormalisees().reduce(
-      (total, ligne) => total + (ligne.repartitions ?? []).reduce(
-        (somme, repartition) => somme + Number(repartition.palettes || 0),
-        0
-      ),
-      0
-    );
-    if (globalCommande && totalPalettesCalcule <= 0) return "Aucune palette valide n’est disponible dans les répartitions de la commande.";
 
     if (globalCommande) return null;
 

@@ -248,18 +248,6 @@ setDestinationGlobale(estGlobal ? valeursDestinations[0] ?? "" : "");
       toast.error("Choisissez la destination de la commande.");
       return;
     }
-    const totalPalettesCalcule = commande.lignes.reduce(
-      (total, ligne) => total + (ligne.repartitions ?? []).reduce(
-        (somme, repartition) => somme + Number(repartition.palettes || 0),
-        0
-      ),
-      0
-    );
-    if (globalCommande && totalPalettesCalcule <= 0) {
-      toast.error("Aucune palette valide n’est disponible dans les répartitions de la commande.");
-      return;
-    }
-
     if (mode === "create" && !rayonId) {
       const message =
         erreurRayon ??
@@ -276,11 +264,12 @@ setDestinationGlobale(estGlobal ? valeursDestinations[0] ?? "" : "");
         (somme, repartition) => somme + Number(repartition.palettes || 0),
         0
       );
+      const palettesGlobales = totalLigne > 0 ? totalLigne : 1;
 
       return {
         ...ligne,
         repartitions: globalCommande
-          ? [{ palettes: totalLigne, destination: destinationGlobale }]
+          ? [{ palettes: palettesGlobales, destination: destinationGlobale }]
           : ligne.repartitions,
       };
     });
