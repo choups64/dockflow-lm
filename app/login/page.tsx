@@ -10,7 +10,7 @@ import {
   LockKeyhole,
   Mail,
   MapPin,
-  Package,
+  PackageCheck,
   ShieldCheck,
   Truck,
   Zap,
@@ -107,22 +107,21 @@ export default function LoginPage() {
                 className="h-full w-full object-contain"
               />
             </div>
-            <h1 className="whitespace-nowrap text-3xl font-black tracking-[-0.04em] sm:text-4xl">
-              DockFlow <span className="text-[#78BE20]">LM</span>
+            <h1 className="whitespace-nowrap text-3xl font-black uppercase tracking-[-0.04em] sm:text-4xl">
+              <span className="text-[#101820]">Dock</span>
+              <span className="text-[#78BE20]">Flow</span>
+              <span className="text-[#101820]"> LM</span>
             </h1>
           </div>
 
           <div className="hidden flex-1 flex-col lg:flex">
             <div className="mt-10 max-w-2xl xl:mt-12">
               <p className="text-4xl font-black leading-[1.08] tracking-[-0.045em] xl:text-5xl">
-                Pilotez vos arrivages.
-                <br />
+                Pilotez vos arrivages.{" "}
                 <span className="text-[#4F8F12]">Fluidifiez les flux.</span>
               </p>
               <p className="mt-5 max-w-xl text-base leading-7 text-[#66727A] xl:text-lg">
-                Une solution simple pour préparer, orienter
-                <br />
-                et réceptionner les arrivages magasin.
+                Une solution simple pour préparer, orienter et réceptionner les arrivages magasin.
               </p>
             </div>
 
@@ -141,7 +140,7 @@ export default function LoginPage() {
               <div className="relative z-10 grid h-full grid-cols-3 items-center gap-4 pt-5">
                 {[
                   { label: "ARRIVAGE", icon: Truck },
-                  { label: "ORIENTATION", icon: Package },
+                  { label: "ORIENTATION", icon: PackageCheck },
                   { label: "RÉCEPTION", icon: CheckCircle2 },
                 ].map(({ label, icon: Icon }, index) => (
                   <div key={label} className="relative flex items-center">
@@ -167,17 +166,17 @@ export default function LoginPage() {
               {[
                 {
                   title: "Préparation rapide",
-                  description: "Centralisez les informations utiles avant l’arrivée.",
+                  description: "Gagnez du temps et anticipez vos réceptions.",
                   icon: Zap,
                 },
                 {
                   title: "Destinations claires",
-                  description: "Orientez chaque référence vers le bon espace.",
+                  description: "Orientez chaque palette vers la bonne destination.",
                   icon: MapPin,
                 },
                 {
                   title: "Réception simplifiée",
-                  description: "Donnez aux équipes une lecture immédiate des flux.",
+                  description: "Suivez vos arrivages et réduisez les erreurs.",
                   icon: CheckCircle2,
                 },
               ].map(({ title, description, icon: Icon }) => (
@@ -222,7 +221,7 @@ export default function LoginPage() {
                   />
                   <input
                     type="email"
-                    placeholder="prenom.nom@leroymerlin.fr"
+                    placeholder="exemple@leroymerlin.fr"
                     className="min-h-14 w-full rounded-xl border border-[#DCE2E6] bg-[#FAFBFC] py-3 pl-12 pr-4 font-normal text-[#101820] outline-none transition placeholder:text-[#9AA4AA] focus:border-[#78BE20] focus:bg-white focus:ring-4 focus:ring-[#78BE20]/15"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
