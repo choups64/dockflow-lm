@@ -72,6 +72,29 @@ function creerIdentifiantLigne(referenceLM: string) {
   return `${referenceLM}-${crypto.randomUUID()}`;
 }
 
+function normaliserDatePourInput(value: string | null | undefined) {
+  if (!value) return "";
+
+  const dateISO = value.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (dateISO) return dateISO[1];
+
+  const dateFrancaise = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (dateFrancaise) return `${dateFrancaise[3]}-${dateFrancaise[2]}-${dateFrancaise[1]}`;
+
+  return value;
+}
+
+function estDateValide(value: string) {
+  const correspondance = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!correspondance) return false;
+
+  const [, annee, mois, jour] = correspondance;
+  const date = new Date(Date.UTC(Number(annee), Number(mois) - 1, Number(jour)));
+  return date.getUTCFullYear() === Number(annee)
+    && date.getUTCMonth() === Number(mois) - 1
+    && date.getUTCDate() === Number(jour);
+}
+
 export default function PreparationArrivagePage({
   mode = "create",
   arrivageId,
@@ -132,6 +155,7 @@ export default function PreparationArrivagePage({
       }));
       setCommande({
         ...commandeImportee,
+        dateLivraison: normaliserDatePourInput(commandeImportee.dateLivraison),
         lignes: lignesImportees,
       });
       setCommentaireCariste(commandeImportee.commentaire ?? "");
@@ -175,7 +199,7 @@ lignes.forEach((l: LigneArrivageEnregistree) => {
 setCommande({
   commande: arrivage.commande,
   fournisseur: arrivage.fournisseur ?? "",
-  dateLivraison: arrivage.date_arrivee ?? "",
+  dateLivraison: normaliserDatePourInput(arrivage.date_arrivee),
   lignes: Array.from(lignesRegroupees.values()),
 });
 setCommentaireCariste(arrivage.commentaire ?? "");
@@ -247,6 +271,10 @@ setDestinationGlobale(estGlobal ? valeursDestinations[0] ?? "" : "");
       toast.error("Ajoutez au moins une référence avant d'enregistrer l'arrivage.");
       return;
     }
+    if (commande.dateLivraison && !estDateValide(commande.dateLivraison)) {
+      toast.error("La date de réception prévisionnelle est invalide.");
+      return;
+    }
     if (globalCommande && !destinationGlobale) {
       toast.error("Choisissez la destination de la commande.");
       return;
@@ -280,24 +308,7 @@ setDestinationGlobale(estGlobal ? valeursDestinations[0] ?? "" : "");
       };
     });
 
-    let dateISO: string | null = null;
-
-    if (commande.dateLivraison) {
-      if (commande.dateLivraison) {
-
-  if (commande.dateLivraison.includes("/")) {
-
-    const [j, m, a] = commande.dateLivraison.split("/");
-    dateISO = `${a}-${m}-${j}`;
-
-  } else {
-
-    dateISO = commande.dateLivraison;
-
-  }
-
-}
-    }
+    const dateISO = commande.dateLivraison || null;
 
     try {
   if (mode === "edit" && arrivageId) {
@@ -367,7 +378,16 @@ if (!commande) {
 
           <p className="mt-3 text-[#66727A]">Commande {commande.commande}</p>
           <p className="text-[#66727A]">{commande.fournisseur}</p>
-          <p className="text-[#66727A]">Livraison : {commande.dateLivraison}</p>
+          <label htmlFor="date-reception-previsionnelle" className="mt-4 block max-w-sm font-semibold text-[#101820]">
+            Date de réception prévisionnelle
+            <input
+              id="date-reception-previsionnelle"
+              type="date"
+              value={commande.dateLivraison}
+              onChange={(event) => setCommande((precedente) => precedente ? { ...precedente, dateLivraison: event.target.value } : precedente)}
+              className="mt-2 min-h-12 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 font-normal text-[#101820] outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15"
+            />
+          </label>
         </div>
 
         <section className="mb-8 rounded-3xl border border-[#E3E8EC] bg-white p-5 shadow-sm sm:p-6">
