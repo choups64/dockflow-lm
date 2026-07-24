@@ -18,6 +18,7 @@ export type Arrivage = {
   rayon_id: number | null;
   rayon: Rayon | null;
   commentaire: string | null;
+  nombre_total_palettes: number | null;
 };
 
 export type LigneArrivage = {

@@ -19,6 +19,7 @@ type Arrivage = {
   date_arrivee: string | null;
   statut: string;
   created_at?: string | null;
+  nombre_total_palettes?: number | null;
 };
 
 type OrdreDate = "desc" | "asc";
@@ -176,6 +177,7 @@ export default function ArrivagesPage() {
                   <th className="px-6 py-4">Fournisseur</th>
                   <th className="px-6 py-4">Livraison</th>
                   <th className="px-6 py-4">Statut</th>
+                  <th className="px-6 py-4">Estimation</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -188,6 +190,7 @@ export default function ArrivagesPage() {
                       <td className="px-6 py-5 text-[#66727A]">{a.fournisseur ?? "-"}</td>
                       <td className="px-6 py-5 text-[#66727A]">{a.date_arrivee ?? "-"}</td>
                       <td className="px-6 py-5"><span className={`rounded-full px-3 py-1.5 text-sm font-semibold ${statut.badgeClassName}`}>{statut.emoji} {statut.libelle}</span></td>
+                      <td className="px-6 py-5 text-[#66727A]">{a.nombre_total_palettes && a.nombre_total_palettes > 0 ? `Palettes estimées : ${a.nombre_total_palettes}` : "-"}</td>
                       <td className="px-6 py-5"><ActionsArrivage id={a.id} onEdit={() => router.push(`/dashboard/arrivages/modifier/${a.id}`)} onDelete={() => supprimer(a.id)} /></td>
                     </tr>
                   );
@@ -203,6 +206,7 @@ export default function ArrivagesPage() {
                   <div className="flex items-start justify-between gap-3"><p className="text-lg font-black">Commande {a.commande}</p><span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${statut.badgeClassName}`}>{statut.emoji} {statut.libelle}</span></div>
                   <p className="mt-3 text-sm text-[#66727A]">{a.fournisseur ?? "Fournisseur non renseigné"}</p>
                   <p className="mt-1 text-sm text-[#66727A]">Livraison : {a.date_arrivee ?? "-"}</p>
+                  {a.nombre_total_palettes && a.nombre_total_palettes > 0 ? <p className="mt-1 text-sm text-[#66727A]">Palettes estimées : {a.nombre_total_palettes}</p> : null}
                   <div className="mt-4"><ActionsArrivage id={a.id} onEdit={() => router.push(`/dashboard/arrivages/modifier/${a.id}`)} onDelete={() => supprimer(a.id)} /></div>
                 </article>
               );

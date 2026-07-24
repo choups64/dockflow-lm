@@ -54,6 +54,7 @@ export type ArrivagePreparation = {
   dateLivraison: string | null;
   rayonId: string;
   commentaire?: string | null;
+  nombreTotalPalettes?: number;
   lignes: LignePreparation[];
 };
 
@@ -87,6 +88,7 @@ export async function creerArrivagePreparation(data: ArrivagePreparation) {
     fournisseur: data.fournisseur,
     date_arrivee: data.dateLivraison,
     commentaire: data.commentaire ?? null,
+    ...(data.nombreTotalPalettes !== undefined ? { nombre_total_palettes: data.nombreTotalPalettes } : {}),
     statut: "EN_PREPARATION",
     rayon_id: rayon.id,
     magasin_id: profil.magasinId,
@@ -139,6 +141,7 @@ export async function updateArrivage(
     fournisseur:data.fournisseur,
     date_arrivee:data.dateLivraison,
     commentaire:data.commentaire ?? null,
+    ...(data.nombreTotalPalettes !== undefined ? { nombre_total_palettes: data.nombreTotalPalettes } : {}),
     ...(statut ? { statut } : {}),
     updated_at:new Date().toISOString(),
   }).eq("id",id);

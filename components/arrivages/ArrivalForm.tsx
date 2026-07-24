@@ -33,6 +33,7 @@ export default function ArrivalForm() {
   const [lignes, setLignes] = useState<LigneManuelle[]>([nouvelleLigne()]);
   const [globalCommande, setGlobalCommande] = useState(true);
   const [destinationGlobale, setDestinationGlobale] = useState("");
+  const [nombrePalettesEstime, setNombrePalettesEstime] = useState("");
   const [chargement, setChargement] = useState(true);
   const [enregistrement, setEnregistrement] = useState(false);
   const [erreurRayon, setErreurRayon] = useState<string | null>(null);
@@ -84,12 +85,16 @@ export default function ArrivalForm() {
   }
 
   function lignesNormalisees(): LignePreparation[] {
-    return lignes.map((ligne) => {
+    const estimation = nombrePalettesEstime ? Number(nombrePalettesEstime) : null;
+
+    return lignes.map((ligne, index) => {
       const totalLigne = ligne.repartitions.reduce(
         (somme, repartition) => somme + Number(repartition.palettes || 0),
         0
       );
-      const palettesGlobales = totalLigne > 0 ? totalLigne : 1;
+      const palettesGlobales = estimation !== null
+        ? (index === 0 ? estimation : 0)
+        : (totalLigne > 0 ? totalLigne : 1);
 
       return {
         referenceLM: ligne.referenceLM.trim(),
@@ -150,6 +155,7 @@ export default function ArrivalForm() {
         dateLivraison: dateLivraison || null,
         rayonId,
         commentaire: commentaire.trim() || null,
+        nombreTotalPalettes: globalCommande && nombrePalettesEstime ? Number(nombrePalettesEstime) : undefined,
         lignes: lignesNormalisees(),
       });
       toast.success("Arrivage enregistré avec succès.");
@@ -194,6 +200,7 @@ export default function ArrivalForm() {
             <option value="">{destinations.length ? "Choisir une destination..." : "Aucune destination disponible"}</option>
             {destinations.map((destination) => <option key={destination.id} value={destinationValue(destination)}>{destination.nom}</option>)}
           </select>}
+          {globalCommande && <label htmlFor="nombre-palettes-estime" className="mt-5 block font-semibold text-[#101820]">Nombre de palettes estimé<input id="nombre-palettes-estime" type="number" min="1" step="1" inputMode="numeric" placeholder="Ex : 8" value={nombrePalettesEstime} onChange={(event) => { const valeur = event.target.value; if (valeur === "" || (/^\d+$/.test(valeur) && Number(valeur) >= 1)) { setNombrePalettesEstime(valeur); invaliderPreparation(); } }} className="mt-2 min-h-12 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 font-normal outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15" /></label>}
           {globalCommande && <div className="mt-5 grid gap-5"><label htmlFor="commentaire-cariste" className="font-semibold text-[#101820]">Commentaire pour le cariste<textarea id="commentaire-cariste" rows={4} maxLength={500} value={commentaire} onChange={(event) => { setCommentaire(event.target.value); invaliderPreparation(); }} className="mt-2 w-full rounded-xl border border-[#E3E8EC] bg-white px-4 py-3 font-normal outline-none transition focus:border-[#78BE20] focus:ring-4 focus:ring-[#78BE20]/15" placeholder="Ex : Toute la commande à déposer en BMV, prévenir le rayon à la réception…" /><span className="mt-1 block text-right text-xs font-normal text-[#66727A]">{commentaire.length}/500</span></label></div>}
           {erreurDestinations && <p className="mt-3 text-sm font-semibold text-red-600">{erreurDestinations}</p>}
         </section>
